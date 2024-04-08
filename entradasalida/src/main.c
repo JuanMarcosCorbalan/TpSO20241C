@@ -1,8 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <utils/hello.h>
+#include "../Headers/main.h"
 
-int main(int argc, char* argv[]) {
-    decir_hola("una Interfaz de Entrada/Salida");
-    return 0;
+int main(int argc, char *argv[]) {
+	app_config = cargar_config("app.config");
+	app_log = iniciar_log("app.log");
+
+	iniciar_conexiones();
+
+	return 0;
 }
