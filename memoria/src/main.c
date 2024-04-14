@@ -1,9 +1,10 @@
 #include "../Headers/main.h"
 
 int main(int argc, char *argv[]) {
-	app_config = cargar_config("app.config");
-	app_log = iniciar_log("app.log");
+	cargar_config("app.config");
+	iniciar_log("app.log");
 
+	instrucciones_procesos = list_create();
 	iniciar_servidor();
 
 	return 0;

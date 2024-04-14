@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <commons/log.h>
 
-t_log* iniciar_log(char* path);
+extern t_log* app_log;
+
+void iniciar_log(char* path);
 
 #endif /* HEADERS_LOG_H_ */

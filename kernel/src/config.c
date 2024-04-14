@@ -1,19 +1,19 @@
 #include "../Headers/config.h"
 
-t_kernel_config* cargar_config(char* path) {
+void cargar_config(char* path) {
 	t_config* archivo_config = config_create(path);
-	t_kernel_config* config = malloc(sizeof(t_kernel_config));
+	app_config = malloc(sizeof(t_kernel_config));
 
-	config->algoritmo_planificacion = config_get_string_value(archivo_config, "ALGORITMO_PLANIFICACION");
-	config->grado_multiprogramacion = config_get_int_value(archivo_config, "GRADO_MULTIPROGRAMACION");
-	config->ip_cpu = config_get_string_value(archivo_config, "IP_CPU");
-	config->ip_memoria = config_get_string_value(archivo_config, "IP_MEMORIA");
-	config->puerto_cpu_dispatch = config_get_int_value(archivo_config, "PUERTO_CPU_DISPATCH");
-	config->puerto_cpu_interrupt = config_get_int_value(archivo_config, "PUERTO_CPU_INTERRUPT");
-	config->puerto_escucha = config_get_int_value(archivo_config, "PUERTO_ESCUCHA");
-	config->puerto_memoria = config_get_int_value(archivo_config, "PUERTO_MEMORIA");
-	config->quantum = config_get_int_value(archivo_config, "QUANTUM");
-	config->recursos = list_create();
+	app_config->algoritmo_planificacion = config_get_string_value(archivo_config, "ALGORITMO_PLANIFICACION");
+	app_config->grado_multiprogramacion = config_get_int_value(archivo_config, "GRADO_MULTIPROGRAMACION");
+	app_config->ip_cpu = config_get_string_value(archivo_config, "IP_CPU");
+	app_config->ip_memoria = config_get_string_value(archivo_config, "IP_MEMORIA");
+	app_config->puerto_cpu_dispatch = config_get_int_value(archivo_config, "PUERTO_CPU_DISPATCH");
+	app_config->puerto_cpu_interrupt = config_get_int_value(archivo_config, "PUERTO_CPU_INTERRUPT");
+	app_config->puerto_escucha = config_get_int_value(archivo_config, "PUERTO_ESCUCHA");
+	app_config->puerto_memoria = config_get_int_value(archivo_config, "PUERTO_MEMORIA");
+	app_config->quantum = config_get_int_value(archivo_config, "QUANTUM") / 1000;
+	app_config->recursos = list_create();
 
 	char* recursos = config_get_string_value(archivo_config, "RECURSOS");
 	recursos = string_replace(recursos, "[", "");
@@ -38,7 +38,7 @@ t_kernel_config* cargar_config(char* path) {
 		tad_recurso->nombre = malloc(strlen(recurso)+ 1);
 		memcpy(tad_recurso->nombre, recurso, strlen(recurso)+ 1);
 		tad_recurso->cantidad = atoi(cantidad_recurso);
-		list_add(config->recursos, tad_recurso);
+		list_add(app_config->recursos, tad_recurso);
 
 		free(recurso);
 		free(cantidad_recurso);
@@ -50,6 +50,4 @@ t_kernel_config* cargar_config(char* path) {
 
 	free(list_recursos);
 	free(list_instancias_recursos);
-
-	return config;
 }

@@ -5,6 +5,7 @@
 #include "config.h"
 #include "log.h"
 #include "conexiones.h"
+#include "interfaces.h"
 
 t_io_config* app_config;
 t_log* app_log;

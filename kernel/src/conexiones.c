@@ -1,10 +1,5 @@
 #include "../Headers/conexiones.h"
 
-void operar(int* socket_io) {
-	close(*socket_io);
-	free(socket_io);
-}
-
 void iniciar_conexion_memoria() {
 	socket_memoria = establecer_conexion_cliente(app_config->ip_memoria, app_config->puerto_memoria);
 	log_info(app_log, "Se establece conexión con Memoria con el socket id %d", socket_memoria);
@@ -41,7 +36,7 @@ void iniciar_escucha_io() {
 			break;
 
 		pthread_t hilo_cliente;
-		pthread_create(&hilo_cliente, NULL, (void*) operar, socket_io);
+		pthread_create(&hilo_cliente, NULL, (void*) operar_io, socket_io);
 		pthread_detach(hilo_cliente);
 	}
 }
@@ -68,5 +63,5 @@ void iniciar_conexiones() {
 
 	pthread_t thread_io;
 	pthread_create(&thread_io, NULL, (void*) iniciar_escucha_io, NULL);
-	pthread_join(thread_io, NULL);
+	pthread_detach(thread_io);
 }

@@ -1,11 +1,47 @@
 #include "../Headers/conexiones.h"
 
 void operar_dispatch(int* socket_cliente) {
+	int seguir_operando = 1;
+
+	while(seguir_operando) {
+		t_paquete* paquete_inicial = recv_paquete(*socket_cliente);
+		dt_contexto_proceso* contexto_proceso = deserializar_contexto_proceso(paquete_inicial->buffer);
+
+		ejecutar_proceso(contexto_proceso, *socket_cliente);
+
+		free(contexto_proceso->registros_cpu);
+		free(contexto_proceso);
+		free(paquete_inicial->buffer->stream);
+		free(paquete_inicial->buffer);
+		free(paquete_inicial);
+	}
+
 	close(*socket_cliente);
 	free(socket_cliente);
 }
 
 void operar_interrupt(int* socket_cliente) {
+	int seguir_operando = 1;
+
+	while(seguir_operando) {
+		t_paquete* paquete = recv_paquete(*socket_cliente);
+		dt_interrumpir_proceso* interrumpir_proceso;
+
+		switch(paquete->codigo_operacion) {
+			case MSG_INTERRUPT:
+				interrumpir_proceso = deserializar_interrumpir_proceso(paquete->buffer);
+				// LÓGICA PARA INTERRUMPIR EL PROCESO
+				free(interrumpir_proceso);
+			break;
+			default:
+				break;
+		}
+
+		free(paquete->buffer->stream);
+		free(paquete->buffer);
+		free(paquete);
+	}
+
 	close(*socket_cliente);
 	free(socket_cliente);
 }
@@ -74,4 +110,6 @@ void iniciar_conexiones() {
 	pthread_t thread_interrupt;
 	pthread_create(&thread_interrupt, NULL, (void*) iniciar_servidor_interrupt, NULL);
 	pthread_detach(thread_interrupt);
+
+	sem_wait(&sem_conexiones);
 }

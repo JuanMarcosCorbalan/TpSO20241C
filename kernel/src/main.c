@@ -1,10 +1,16 @@
 #include "../Headers/main.h"
 
 int main(int argc, char *argv[]) {
-	app_config = cargar_config("app.config");
-	app_log = iniciar_log("app.log");
+	cargar_config("app.config");
+	iniciar_log("app.log");
 
+	iniciar_estructuras();
 	iniciar_conexiones();
+
+	iniciar_planificador_largo_plazo();
+	iniciar_planificador_corto_plazo();
+
+	iniciar_consola();
 
 	return 0;
 }

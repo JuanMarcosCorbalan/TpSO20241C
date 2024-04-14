@@ -21,6 +21,8 @@ typedef struct t_kernel_config {
 	t_list* recursos;
 } t_kernel_config;
 
-t_kernel_config* cargar_config(char* path);
+extern t_kernel_config* app_config;
+
+void cargar_config(char* path);
 
 #endif /* HEADERS_CONFIG_H_ */

@@ -3,6 +3,7 @@
 
 #include "../../utils/Headers/connection.h"
 #include "../../utils/Headers/communication.h"
+#include "administrador_io.h"
 #include <commons/log.h>
 #include <pthread.h>
 #include <semaphore.h>

@@ -14,7 +14,9 @@ typedef struct t_memoria_config {
 	int retardo_respuesta;
 } t_memoria_config;
 
-t_memoria_config* cargar_config(char* path);
+extern t_memoria_config* app_config;
+
+void cargar_config(char* path);
 void finalizar_config(t_memoria_config* config);
 
 #endif /* HEADERS_CONFIG_H_ */

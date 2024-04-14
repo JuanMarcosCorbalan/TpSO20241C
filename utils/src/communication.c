@@ -36,8 +36,6 @@ t_paquete* recv_paquete(int socket) {
 	return paquete;
 }
 
-// FUNCION PARA VALIDAR CONEXION CON HANDSHAKE
-
 int send_handshake(int socket)
 {
 	uint8_t request_handshake = HANDSHAKE_OK;

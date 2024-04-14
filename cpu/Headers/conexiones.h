@@ -3,6 +3,8 @@
 
 #include "../../utils/Headers/connection.h"
 #include "../../utils/Headers/communication.h"
+#include "../../utils/Headers/mensajeria_kernel_cpu.h"
+#include "ciclo_instruccion.h"
 #include <commons/log.h>
 #include <pthread.h>
 #include <semaphore.h>

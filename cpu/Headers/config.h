@@ -16,6 +16,7 @@ typedef struct t_cpu_config {
 	int cantidad_entradas_tlb;
 } t_cpu_config;
 
-t_cpu_config* cargar_config(char* path);
+extern t_cpu_config* app_config;
+void cargar_config(char* path);
 
 #endif /* HEADERS_CONFIG_H_ */

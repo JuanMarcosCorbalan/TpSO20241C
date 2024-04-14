@@ -15,9 +15,9 @@ typedef struct {
     t_buffer* buffer;
 } t_paquete;
 
-typedef struct t_recursoSistema {
+typedef struct t_recurso_sistema {
 	char* nombre;
-	int cantidad;
+	uint32_t cantidad;
 	t_list* solicitud;
 	t_list* asignacion;
 } t_recurso_sistema;
@@ -37,10 +37,31 @@ typedef struct t_registros_cpu {
 } t_registros_cpu;
 
 typedef struct t_pcb {
-	int pid;
-	int program_counter;
-	int quantum;
+	uint32_t pid;
+	uint32_t program_counter;
+	uint32_t quantum;
+	uint32_t quantum_ejecutados;
+	uint8_t algoritmo;
+	uint8_t estado;
+	uint8_t motivo_blocked;
+	uint8_t motivo_exit;
+	char* path_instrucciones;
 	t_registros_cpu* registros_cpu;
 } t_pcb;
+
+typedef struct t_instruccion {
+	uint32_t tamanio_instruccion;
+	uint32_t tamanio_parametro_1;
+	uint32_t tamanio_parametro_2;
+	uint32_t tamanio_parametro_3;
+	uint32_t tamanio_parametro_4;
+	uint32_t tamanio_parametro_5;
+	char* instruccion;
+	char* parametro_1;
+	char* parametro_2;
+	char* parametro_3;
+	char* parametro_4;
+	char* parametro_5;
+} t_instruccion;
 
 #endif /* HEADERS_MODELS_H_ */

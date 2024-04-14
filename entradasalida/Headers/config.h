@@ -18,6 +18,8 @@ typedef struct t_io_config {
 	int block_count;
 } t_io_config;
 
-t_io_config* cargar_config(char* path);
+extern t_io_config* app_config;
+
+void cargar_config(char* path);
 
 #endif /* HEADERS_CONFIG_H_ */

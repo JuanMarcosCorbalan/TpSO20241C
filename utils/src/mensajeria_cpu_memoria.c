@@ -1,0 +1,143 @@
+#include "../Headers/mensajeria_cpu_memoria.h"
+
+void request_proxima_instruccion(int socket, uint32_t pid, uint32_t program_counter) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 2;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &program_counter, sizeof(uint32_t));
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_PROXIMA_INSTRUCCION, socket);
+}
+
+dt_proxima_instruccion* deserializar_proxima_instruccion(t_buffer* buffer) {
+	dt_proxima_instruccion* proxima_instruccion = malloc(sizeof(dt_proxima_instruccion));
+	void* stream = buffer->stream;
+
+	memcpy(&proxima_instruccion->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&proxima_instruccion->program_counter, stream, sizeof(uint32_t));
+
+	return proxima_instruccion;
+}
+
+void request_instruccion(int socket, t_instruccion* instruccion) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 6;
+	buffer->size += instruccion->tamanio_instruccion;
+	buffer->size += instruccion->tamanio_parametro_1;
+	buffer->size += instruccion->tamanio_parametro_2;
+	buffer->size += instruccion->tamanio_parametro_3;
+	buffer->size += instruccion->tamanio_parametro_4;
+	buffer->size += instruccion->tamanio_parametro_5;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &instruccion->tamanio_instruccion, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &instruccion->tamanio_parametro_1, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &instruccion->tamanio_parametro_2, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &instruccion->tamanio_parametro_3, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &instruccion->tamanio_parametro_4, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &instruccion->tamanio_parametro_5, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	if(instruccion->tamanio_instruccion > 0) {
+		memcpy(stream + offset, instruccion->instruccion, instruccion->tamanio_instruccion);
+		offset += instruccion->tamanio_instruccion;
+	}
+
+	if(instruccion->tamanio_parametro_1 > 0) {
+		memcpy(stream + offset, instruccion->parametro_1, instruccion->tamanio_parametro_1);
+		offset += instruccion->tamanio_parametro_1;
+	}
+
+	if(instruccion->tamanio_parametro_2 > 0) {
+		memcpy(stream + offset, instruccion->parametro_2, instruccion->tamanio_parametro_2);
+		offset += instruccion->tamanio_parametro_2;
+	}
+
+	if(instruccion->tamanio_parametro_3 > 0) {
+		memcpy(stream + offset, instruccion->parametro_3, instruccion->tamanio_parametro_3);
+		offset += instruccion->tamanio_parametro_3;
+	}
+
+	if(instruccion->tamanio_parametro_4 > 0) {
+		memcpy(stream + offset, instruccion->parametro_4, instruccion->tamanio_parametro_4);
+		offset += instruccion->tamanio_parametro_4;
+	}
+
+	if(instruccion->tamanio_parametro_5 > 0) {
+		memcpy(stream + offset, instruccion->parametro_5, instruccion->tamanio_parametro_5);
+		offset += instruccion->tamanio_parametro_5;
+	}
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_INSTRUCCION, socket);
+}
+
+t_instruccion* deserializar_instruccion(t_buffer* buffer) {
+	t_instruccion* instruccion = malloc(sizeof(t_instruccion));
+	void* stream = buffer->stream;
+
+	memcpy(&instruccion->tamanio_instruccion, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&instruccion->tamanio_parametro_1, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&instruccion->tamanio_parametro_2, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&instruccion->tamanio_parametro_3, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&instruccion->tamanio_parametro_4, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&instruccion->tamanio_parametro_5, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	if(instruccion->tamanio_instruccion > 0) {
+		instruccion->instruccion = malloc(instruccion->tamanio_instruccion);
+		memcpy(instruccion->instruccion, stream, instruccion->tamanio_instruccion);
+		stream += instruccion->tamanio_instruccion;
+	}
+
+	if(instruccion->tamanio_parametro_1 > 0) {
+		instruccion->parametro_1 = malloc(instruccion->tamanio_parametro_1);
+		memcpy(instruccion->parametro_1, stream, instruccion->tamanio_parametro_1);
+		stream += instruccion->tamanio_parametro_1;
+	}
+
+	if(instruccion->tamanio_parametro_2 > 0) {
+		instruccion->parametro_2 = malloc(instruccion->tamanio_parametro_2);
+		memcpy(instruccion->parametro_2, stream, instruccion->tamanio_parametro_2);
+		stream += instruccion->tamanio_parametro_2;
+	}
+
+	if(instruccion->tamanio_parametro_3 > 0) {
+		instruccion->parametro_3 = malloc(instruccion->tamanio_parametro_3);
+		memcpy(instruccion->parametro_3, stream, instruccion->tamanio_parametro_3);
+		stream += instruccion->tamanio_parametro_3;
+	}
+
+	if(instruccion->tamanio_parametro_4 > 0) {
+		instruccion->parametro_4 = malloc(instruccion->tamanio_parametro_4);
+		memcpy(instruccion->parametro_4, stream, instruccion->tamanio_parametro_4);
+		stream += instruccion->tamanio_parametro_4;
+	}
+
+	if(instruccion->tamanio_parametro_5 > 0) {
+		instruccion->parametro_5 = malloc(instruccion->tamanio_parametro_5);
+		memcpy(instruccion->parametro_5, stream, instruccion->tamanio_parametro_5);
+		stream += instruccion->tamanio_parametro_5;
+	}
+
+	return instruccion;
+}
