@@ -57,8 +57,13 @@ void iniciar_proceso(char* path) {
 	free(path);
 }
 
-void ejecutar_script(char* path) {
+char* ejecutar_script(char* path) {
+	FILE * archivo_instrucciones = fopen(path, "r");
+	char* buffer_instrucciones = malloc(100);
+	fgets(buffer_instrucciones, 100, archivo_instrucciones);
+	fclose(archivo_instrucciones);
 	free(path);
+	return buffer_instrucciones;
 }
 
 void finalizar_proceso(char* pid) {
@@ -113,9 +118,19 @@ void iniciar_consola() {
 		uint8_t tipo_operacion = obtener_tipo_operachion(operacion);
 		free(operacion);
 
-//		if(tipo_operacion == EJECUTAR_SCRIPT) {
-//			// ACÁ OBTENGO EL SCRIPT
-//		}
+		char** parametros_aux;
+		if(tipo_operacion == EJECUTAR_SCRIPT) {
+			char* linea_aux = ejecutar_script(parametros[1]);
+			parametros_aux = string_split(linea_aux, " ");
+			free(linea_aux);
+
+			char* operacion_aux = parametros_aux[0];
+			tipo_operacion = obtener_tipo_operachion(operacion_aux);
+			free(operacion_aux);
+
+			parametros[1] = parametros_aux[1];
+			free(parametros_aux);
+		}
 
 		switch(tipo_operacion) {
 			case INICIAR_PROCESO:

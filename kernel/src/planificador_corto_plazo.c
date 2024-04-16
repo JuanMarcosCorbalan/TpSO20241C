@@ -40,7 +40,6 @@ void ejecutar_proceso(t_pcb* proceso) {
 		dt_contexto_proceso* contexto_proceso;
 		t_interfaz_io* aux_interfaz;
 		dt_recurso_proceso* recurso_proceso;
-		dt_interrumpir_proceso* interrumpir_proceso;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_DESALOJO:
