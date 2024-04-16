@@ -25,18 +25,24 @@ void operar_interrupt(int* socket_cliente) {
 
 	while(seguir_operando) {
 		t_paquete* paquete = recv_paquete(*socket_cliente);
-		dt_interrumpir_proceso* interrumpir_proceso;
+		dt_interrumpir_proceso* interrumpir_proceso = deserializar_interrumpir_proceso(paquete->buffer);
+
+		existe_interrupcion = 1;
 
 		switch(paquete->codigo_operacion) {
-			case MSG_INTERRUPT:
-				interrumpir_proceso = deserializar_interrumpir_proceso(paquete->buffer);
-				// LÓGICA PARA INTERRUMPIR EL PROCESO
-				free(interrumpir_proceso);
+			case MSG_INTERRUPT_BLOQUEAR:
+				motivo_interrupt_exit = 0;
+				motivo_interrupt_bloqueo = interrumpir_proceso->motivo;
+			break;
+			case MSG_INTERRUPT_EXIT:
+				motivo_interrupt_bloqueo = 0;
+				motivo_interrupt_exit = interrumpir_proceso->motivo;
 			break;
 			default:
 				break;
 		}
 
+		free(interrumpir_proceso);
 		free(paquete->buffer->stream);
 		free(paquete->buffer);
 		free(paquete);

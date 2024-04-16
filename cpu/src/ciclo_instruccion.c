@@ -98,11 +98,23 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 	while(seguir_ejecutando) {
 
 		// VALIDAR QUE NO TENGA INTERRUPCION
-		// VALIDAR QUE NO TENGA INTERRUPCION
-		// VALIDAR QUE NO TENGA INTERRUPCION
-		// VALIDAR QUE NO TENGA INTERRUPCION
+		if(existe_interrupcion) {
+			if(motivo_interrupt_bloqueo != 0) {
+				contexto_proceso->motivo_blocked = motivo_interrupt_bloqueo;
+				request_desalojo_proceso(socket_cliente, contexto_proceso);
+			}
+			else {
+				contexto_proceso->motivo_exit = motivo_interrupt_exit;
+				request_exit_proceso(socket_cliente, contexto_proceso);
+			}
+			existe_interrupcion = 0;
+			seguir_ejecutando = 0;
+			continue;
+		}
 
 		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR) && contexto_proceso->quantum_ejecutados > contexto_proceso->quantum) {
+			contexto_proceso->motivo_blocked = SIN_MOTIVO_BLOCKED;
+			contexto_proceso->motivo_exit = SIN_MOTIVO_EXIT;
 			contexto_proceso->quantum_ejecutados = 1;
 			request_desalojo_proceso(socket_cliente, contexto_proceso);
 			seguir_ejecutando = 0;
@@ -157,10 +169,16 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 			case COPY_STRING:
 				break;
 			case WAIT:
+				request_wait_recurso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1);
+				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case SIGNAL:
+				request_signal_recurso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1);
+				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case IO_GEN_SLEEP:
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				contexto_proceso->quantum_ejecutados = 1;
 				request_sleep_proceso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				seguir_ejecutando = 0;
 				break;

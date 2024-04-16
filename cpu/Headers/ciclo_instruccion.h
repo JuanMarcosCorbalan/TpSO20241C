@@ -19,6 +19,9 @@ extern t_cpu_config* app_config;
 extern int socket_memoria;
 extern int socket_escucha_interrupt;
 extern int socket_escucha_dispatch;
+extern int existe_interrupcion;
+extern uint8_t motivo_interrupt_bloqueo;
+extern uint8_t motivo_interrupt_exit;
 
 void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente);
 

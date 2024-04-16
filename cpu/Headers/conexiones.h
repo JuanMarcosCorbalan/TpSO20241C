@@ -19,6 +19,9 @@ extern int socket_memoria;
 extern int socket_escucha_interrupt;
 extern int socket_escucha_dispatch;
 extern sem_t sem_conexiones;
+extern int existe_interrupcion;
+extern uint8_t motivo_interrupt_bloqueo;
+extern uint8_t motivo_interrupt_exit;
 
 void iniciar_conexiones();
 

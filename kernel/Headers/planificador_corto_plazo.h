@@ -8,12 +8,14 @@
 #include "administrador_pcb.h"
 #include "config.h"
 #include "administrador_io.h"
+#include "administrador_recurso.h"
 #include "../../utils/Headers/enums.h"
 #include "../../utils/Headers/mensajeria_kernel_memoria.h"
 #include "../../utils/Headers/mensajeria_kernel_cpu.h"
 
 extern t_kernel_config* app_config;
 extern int socket_cpu_dispatch;
+extern int socket_cpu_interrupt;
 extern int socket_memoria;
 extern int planificacion_pausada;
 extern sem_t sem_planificacion_pausada;

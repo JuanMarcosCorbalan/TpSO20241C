@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct t_recurso_sistema {
 	char* nombre;
-	uint32_t cantidad;
+	int cantidad;
 	t_list* solicitud;
 	t_list* asignacion;
 } t_recurso_sistema;

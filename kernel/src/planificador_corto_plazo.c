@@ -39,21 +39,64 @@ void ejecutar_proceso(t_pcb* proceso) {
 		dt_sleep_proceso* sleep_proceso;
 		dt_contexto_proceso* contexto_proceso;
 		t_interfaz_io* aux_interfaz;
+		dt_recurso_proceso* recurso_proceso;
+		dt_interrumpir_proceso* interrumpir_proceso;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_DESALOJO:
 				contexto_proceso = deserializar_contexto_proceso(paquete->buffer);
 				actualizar_contexto_pcb(contexto_proceso, proceso);
-				logear_fin_quantum(proceso->pid);
 				remover_pcb(proceso, proceso->estado);
-				agregar_pcb(proceso, READY);
-				logear_ingreso_ready();
-				sem_post(&sem_lista_ready);
+
+				if(contexto_proceso->motivo_blocked == RECURSO)
+					agregar_pcb(proceso, BLOCKED);
+
+				else {
+					logear_fin_quantum(proceso->pid);
+					agregar_pcb(proceso, READY);
+					logear_ingreso_ready();
+					sem_post(&sem_lista_ready);
+				}
+
 				seguir_operando = 0;
 				break;
+
+			case MSG_WAIT_RECURSO:
+				recurso_proceso = deserializar_recurso(paquete->buffer);
+				actualizar_contexto_pcb(recurso_proceso->contexto_proceso, proceso);
+
+				if(existe_recurso(recurso_proceso->nombre_recurso)) {
+					if(operar_wait(proceso, recurso_proceso->nombre_recurso) == 0) {
+						logear_motivo_bloqueo(proceso->pid, recurso_proceso->nombre_recurso);
+						request_interrumpir_proceso_bloquear(socket_cpu_interrupt, proceso->pid, RECURSO);
+					}
+				}
+				else {
+					logear_fin_proceso(proceso->pid, "INVALID_RESOURCE");
+					request_interrumpir_proceso_exit(socket_cpu_interrupt, proceso->pid, INVALID_RESOURCE);
+				}
+
+				request_desbloquear_cpu(socket_cpu_dispatch, proceso->pid);
+				break;
+
+			case MSG_SIGNAL_RECURSO:
+				recurso_proceso = deserializar_recurso(paquete->buffer);
+				actualizar_contexto_pcb(recurso_proceso->contexto_proceso, proceso);
+
+				if(existe_recurso(recurso_proceso->nombre_recurso)) {
+					operar_signal(proceso, recurso_proceso->nombre_recurso);
+					desbloquear_proceso_recurso(recurso_proceso->nombre_recurso);
+				}
+				else {
+					logear_fin_proceso(proceso->pid, "INVALID_RESOURCE");
+					request_interrumpir_proceso_exit(socket_cpu_interrupt, proceso->pid, INVALID_RESOURCE);
+				}
+
+				request_desbloquear_cpu(socket_cpu_dispatch, proceso->pid);
+				break;
+
 			case MSG_IO_GEN_SLEEP:
 				sleep_proceso = deserializar_sleep_proceso(paquete->buffer);
-				sleep_proceso->contexto_proceso->quantum_ejecutados = 1;
 				actualizar_contexto_pcb(sleep_proceso->contexto_proceso, proceso);
 
 				if(!validar_disponibilidad_interfaz(sleep_proceso->nombre_interfaz)) {
@@ -75,15 +118,22 @@ void ejecutar_proceso(t_pcb* proceso) {
 
 				request_ejecutar_instruccion(*aux_interfaz->socket_io, "IO_GEN_SLEEP", sleep_proceso->unidad_trabajo, proceso->pid);
 				list_add(aux_interfaz->bloqueados, proceso);
+				logear_motivo_bloqueo(proceso->pid, sleep_proceso->nombre_interfaz);
 				bloquear(proceso);
 				seguir_operando = 0;
 				break;
+
 			case MSG_FINALIZAR_PROCESO:
 				contexto_proceso = deserializar_contexto_proceso(paquete->buffer);
 				actualizar_contexto_pcb(contexto_proceso, proceso);
+
+				if(contexto_proceso->motivo_exit == SUCCESS)
+					logear_fin_proceso(contexto_proceso->pid, "SUCCESS");
+
 				finalizar(proceso);
 				seguir_operando = 0;
 				break;
+
 			default:
 				break;
 		}

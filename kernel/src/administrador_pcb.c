@@ -93,6 +93,7 @@ void remover_pcb(t_pcb* proceso, uint8_t estado) {
 	else if(estado == BLOCKED) {
 		pthread_mutex_lock(&mutex_lista_blocked);
 		list_remove_element(lista_blocked, proceso);
+		proceso->motivo_blocked = SIN_MOTIVO_BLOCKED;
 		pthread_mutex_unlock(&mutex_lista_blocked);
 	}
 	else {
