@@ -19,7 +19,9 @@ typedef enum cod_op {
 	MSG_DESALOJO,
 	MSG_WAIT_RECURSO,
 	MSG_SIGNAL_RECURSO,
-	MSG_DESBLOQUEAR_CPU
+	MSG_DESBLOQUEAR_CPU,
+	MSG_TAMANIO_PAGINA,
+	MSG_SOLICITUD_TAMANIO_PAGINA
 } cod_op;
 
 typedef enum tipo_interfaz {
@@ -74,6 +76,7 @@ typedef enum motivo_blocked {
 typedef enum estado_proceso {
 	NEW,
 	READY,
+	V_READY,
 	BLOCKED,
 	EXEC,
 	_EXIT

@@ -22,6 +22,7 @@ sem_t sem_conexiones;
 
 t_list* lista_new;
 t_list* lista_ready;
+t_list* lista_v_ready;
 t_list* lista_exec;
 t_list* lista_blocked;
 t_list* lista_exit;
@@ -32,6 +33,7 @@ sem_t sem_lista_exec;
 sem_t sem_lista_blocked;
 pthread_mutex_t mutex_lista_new;
 pthread_mutex_t mutex_lista_ready;
+pthread_mutex_t mutex_lista_v_ready;
 pthread_mutex_t mutex_lista_exec;
 pthread_mutex_t mutex_lista_blocked;
 pthread_mutex_t mutex_lista_exit;

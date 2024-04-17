@@ -85,6 +85,11 @@ void remover_pcb(t_pcb* proceso, uint8_t estado) {
 		list_remove_element(lista_ready, proceso);
 		pthread_mutex_unlock(&mutex_lista_ready);
 	}
+	else if(estado == V_READY) {
+		pthread_mutex_lock(&mutex_lista_v_ready);
+		list_remove_element(lista_v_ready, proceso);
+		pthread_mutex_unlock(&mutex_lista_v_ready);
+	}
 	else if(estado == EXEC) {
 		pthread_mutex_lock(&mutex_lista_exec);
 		list_remove_element(lista_exec, proceso);
@@ -112,12 +117,20 @@ void agregar_pcb(t_pcb* proceso, uint8_t estado) {
 		pthread_mutex_unlock(&mutex_lista_new);
 	}
 	else if(estado == READY) {
-		logear_ingreso_ready();
 		logear_cambio_estado(proceso->pid, convertir_estado_proceso(proceso->estado), "READY");
 		proceso->estado = READY;
 		pthread_mutex_lock(&mutex_lista_ready);
 		list_add(lista_ready, (void*) proceso);
 		pthread_mutex_unlock(&mutex_lista_ready);
+		logear_ingreso_ready();
+	}
+	else if(estado == V_READY) {
+		logear_cambio_estado(proceso->pid, convertir_estado_proceso(proceso->estado), "READY+");
+		proceso->estado = V_READY;
+		pthread_mutex_lock(&mutex_lista_v_ready);
+		list_add(lista_v_ready, (void*) proceso);
+		pthread_mutex_unlock(&mutex_lista_v_ready);
+		logear_ingreso_v_ready();
 	}
 	else if(estado == EXEC) {
 		logear_cambio_estado(proceso->pid, convertir_estado_proceso(proceso->estado), "EXEC");

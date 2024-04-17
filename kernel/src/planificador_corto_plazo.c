@@ -23,8 +23,9 @@ void actualizar_contexto_pcb(dt_contexto_proceso* contexto_nuevo, t_pcb* proceso
 }
 
 t_pcb* obtener_siguiente_proceso() {
-	if(strcmp(app_config->algoritmo_planificacion, "VRR") == 0)
-		return (t_pcb*) list_remove(lista_ready, 0);
+	if(strcmp(app_config->algoritmo_planificacion, "VRR") == 0 && !list_is_empty(lista_v_ready)) {
+		return (t_pcb*) list_remove(lista_v_ready, 0);
+	}
 	return (t_pcb*) list_remove(lista_ready, 0);
 }
 

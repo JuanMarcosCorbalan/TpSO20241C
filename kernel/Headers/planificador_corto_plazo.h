@@ -23,6 +23,7 @@ extern sem_t sem_lista_ready;
 extern sem_t sem_lista_exec;
 extern sem_t sem_grado_multiprogramacion;
 extern t_list* lista_ready;
+extern t_list* lista_v_ready;
 extern t_list* lista_exec;
 extern pthread_mutex_t mutex_ejecucion_proceso;
 
