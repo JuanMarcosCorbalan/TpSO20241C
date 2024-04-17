@@ -20,6 +20,26 @@ void listar_procesos(t_list* lista, char* estado) {
 	free(procesos);
 }
 
+void multiprogramacion(char* grado) {
+	int nuevo_grado = atoi(grado);
+	int diferencia = 0;
+
+	if(nuevo_grado > app_config->grado_multiprogramacion) {
+		diferencia = nuevo_grado - app_config->grado_multiprogramacion;
+		for(int i=0; i<diferencia; i++) {
+			sem_post(&sem_grado_multiprogramacion);
+		}
+	}
+	else {
+		diferencia = app_config->grado_multiprogramacion - nuevo_grado;
+		for(int i=0; i<diferencia; i++) {
+			sem_wait(&sem_grado_multiprogramacion);
+		}
+	}
+
+	free(grado);
+}
+
 uint8_t obtener_tipo_operachion(char* operacion) {
 	if(strcmp(operacion, "EJECUTAR_SCRIPT") == 0)
 		return EJECUTAR_SCRIPT;
@@ -27,6 +47,8 @@ uint8_t obtener_tipo_operachion(char* operacion) {
 		return INICIAR_PROCESO;
 	else if(strcmp(operacion, "FINALIZAR_PROCESO") == 0)
 		return FINALIZAR_PROCESO;
+	else if(strcmp(operacion, "MULTIPROGRAMACION") == 0)
+		return MULTIPROGRAMACION;
 	else if(strcmp(operacion, "DETENER_PLANIFICACION") == 0)
 		return DETENER_PLANIFICACION;
 	else if(strcmp(operacion, "INICIAR_PLANIFICACION") == 0)
@@ -55,15 +77,6 @@ void iniciar_proceso(char* path) {
 	logear_creacion_proceso(nuevo_pcb->pid);
 
 	free(path);
-}
-
-char* ejecutar_script(char* path) {
-	FILE * archivo_instrucciones = fopen(path, "r");
-	char* buffer_instrucciones = malloc(100);
-	fgets(buffer_instrucciones, 100, archivo_instrucciones);
-	fclose(archivo_instrucciones);
-	free(path);
-	return buffer_instrucciones;
 }
 
 void finalizar_proceso(char* pid) {
@@ -101,6 +114,60 @@ void proceso_estado() {
 	listar_procesos(lista_exit, "EXIT");
 }
 
+void ejecutar_instruccion(uint8_t tipo_operacion, char* parametro) {
+	switch(tipo_operacion) {
+		case INICIAR_PROCESO:
+			iniciar_proceso(parametro);
+			break;
+		case MULTIPROGRAMACION:
+			multiprogramacion(parametro);
+			break;
+		case FINALIZAR_PROCESO:
+			finalizar_proceso(parametro);
+			break;
+		case INICIAR_PLANIFICACION:
+			iniciar_planificacion();
+			break;
+		case DETENER_PLANIFICACION:
+			detener_planificacion();
+			break;
+		case PROCESO_ESTADO:
+			proceso_estado();
+			break;
+		case OPERACION_INCORRECTA:
+		default:
+			break;
+	}
+}
+
+void ejecutar_script(char* path) {
+	FILE * archivo_instrucciones = fopen(path, "r");
+	char* buffer_instrucciones = malloc(100);
+
+	while(fgets(buffer_instrucciones, 100, archivo_instrucciones)){
+		strtok(buffer_instrucciones, "\n");
+		char** parametros = string_split(buffer_instrucciones, " ");
+
+		if(strcmp(parametros[0], "\n") == 0) {
+			free(parametros);
+			continue;
+		}
+
+        char* operacion = parametros[0];
+		uint8_t tipo_operacion = obtener_tipo_operachion(operacion);
+
+		ejecutar_instruccion(tipo_operacion, parametros[1]);
+
+		free(operacion);
+		free(parametros);
+	}
+
+	fclose(archivo_instrucciones);
+	free(buffer_instrucciones);
+
+	free(path);
+}
+
 void iniciar_consola() {
 	int continuar = 1;
 	char* linea;
@@ -118,40 +185,11 @@ void iniciar_consola() {
 		uint8_t tipo_operacion = obtener_tipo_operachion(operacion);
 		free(operacion);
 
-		char** parametros_aux;
-		if(tipo_operacion == EJECUTAR_SCRIPT) {
-			char* linea_aux = ejecutar_script(parametros[1]);
-			parametros_aux = string_split(linea_aux, " ");
-			free(linea_aux);
+		if(tipo_operacion == EJECUTAR_SCRIPT)
+			ejecutar_script(parametros[1]);
 
-			char* operacion_aux = parametros_aux[0];
-			tipo_operacion = obtener_tipo_operachion(operacion_aux);
-			free(operacion_aux);
-
-			parametros[1] = parametros_aux[1];
-			free(parametros_aux);
-		}
-
-		switch(tipo_operacion) {
-			case INICIAR_PROCESO:
-				iniciar_proceso(parametros[1]);
-				break;
-			case FINALIZAR_PROCESO:
-				finalizar_proceso(parametros[1]);
-				break;
-			case INICIAR_PLANIFICACION:
-				iniciar_planificacion();
-				break;
-			case DETENER_PLANIFICACION:
-				detener_planificacion();
-				break;
-			case PROCESO_ESTADO:
-				proceso_estado();
-				break;
-			case OPERACION_INCORRECTA:
-			default:
-				break;
-		}
+		else
+			ejecutar_instruccion(tipo_operacion, parametros[1]);
 
 		free(parametros);
 	}
