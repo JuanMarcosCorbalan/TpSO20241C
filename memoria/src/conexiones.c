@@ -12,7 +12,7 @@ void operar(int *socket_cliente) {
 		t_instruccion* instruccion;
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
-				request_tamanitamanio_pagina(*socket_cliente, app_config->tam_pagina);
+				request_tamanio_pagina(*socket_cliente, app_config->tam_pagina);
 			break;
 			case MSG_INICIAR_PROCESO:
 				iniciar_proceso = deserializar_iniciar_proceso(paquete->buffer);
