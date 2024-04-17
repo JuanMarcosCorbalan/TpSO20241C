@@ -92,6 +92,13 @@ int obtener_valor_registro(dt_contexto_proceso* contexto_proceso, char* registro
 	return 0;
 }
 
+t_entrada_tlb* obtener_entrada(int direccion_logica) {
+	t_entrada_tlb* entrada = malloc(sizeof(t_entrada_tlb));
+	entrada->pagina = floor(direccion_logica / tamanio_pagina);
+	entrada->desplazamiento = direccion_logica - entrada->pagina * tamanio_pagina;
+	return entrada;
+}
+
 void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente) {
 	int seguir_ejecutando = 1;
 
@@ -134,14 +141,13 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR))
 			contexto_proceso->quantum_ejecutados += 1;
 
-		// DECODE
-		// DECODE
-		// DECODE
-		// DECODE
-
 		// EXECUTE
 		int valor_registro_destino;
 		int valor_registro_origen;
+		int valor_destino;
+		int valor_tamanio;
+		t_entrada_tlb* entrada_tlb;
+
 		switch(tipo_instruccion) {
 			case SET:
 				setear_registro(contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
@@ -164,8 +170,6 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				if(obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_1) != 0)
 					contexto_proceso->program_counter = atoi(instruccion_completa->parametro_2);
 				break;
-			case RESIZE:
-				break;
 			case COPY_STRING:
 				break;
 			case WAIT:
@@ -177,24 +181,35 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case IO_GEN_SLEEP:
-				contexto_proceso->motivo_blocked = INTERFAZ;
-				contexto_proceso->quantum_ejecutados = 1;
-				request_sleep_proceso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				seguir_ejecutando = 0;
 				break;
 			case IO_STDIN_READ:
 				break;
 			case IO_STDOUT_WRITE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_CREATE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_DELETE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_TRUNCATE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_WRITE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_READ:
+				seguir_ejecutando = 0;
+				break;
+			case RESIZE:
+				request_resize_proceso(socket_cliente, contexto_proceso->pid, atoi(instruccion_completa->parametro_1));
+				if(deserializar_status_resize_proceso(socket_cliente) == 0) {
+					contexto_proceso->motivo_exit = OUT_OF_MEMORY;
+					request_exit_proceso(socket_cliente, contexto_proceso);
+					seguir_ejecutando = 0;
+				}
 				break;
 			case EXIT:
 				contexto_proceso->motivo_exit = SUCCESS;

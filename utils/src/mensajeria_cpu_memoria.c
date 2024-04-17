@@ -141,3 +141,102 @@ t_instruccion* deserializar_instruccion(t_buffer* buffer) {
 
 	return instruccion;
 }
+
+void request_tamanio_pagina(int socket, uint32_t tamanio_pagina) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &tamanio_pagina, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_TAMANIO_PAGINA, socket);
+}
+
+void request_solicitud_tamanio_pagina(int socket) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	uint32_t tamanio_pagina = 0;
+	memcpy(stream + offset, &tamanio_pagina, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_SOLICITUD_TAMANIO_PAGINA, socket);
+}
+
+uint32_t deserializar_tamanio_pagina(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t tamanio_pagina;
+
+	memcpy(&tamanio_pagina, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return tamanio_pagina;
+}
+
+void request_resize_proceso(int socket, uint32_t pid, uint32_t size) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 2;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &size, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_RESIZE_PROCESO, socket);
+}
+
+dt_resize_proceso* deserializar_resize_proceso(t_buffer* buffer) {
+	dt_resize_proceso* resize_proceso = malloc(sizeof(dt_resize_proceso));
+	void* stream = buffer->stream;
+
+	memcpy(&resize_proceso->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&resize_proceso->size, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	return resize_proceso;
+}
+
+void request_status_resize_proceso(int socket, uint32_t estado) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &estado, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_STATUS_RESIZE_PROCESO, socket);
+}
+
+uint32_t deserializar_status_resize_proceso(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t status_resize;
+
+	memcpy(&status_resize, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return status_resize;
+}

@@ -21,7 +21,9 @@ typedef enum cod_op {
 	MSG_SIGNAL_RECURSO,
 	MSG_DESBLOQUEAR_CPU,
 	MSG_TAMANIO_PAGINA,
-	MSG_SOLICITUD_TAMANIO_PAGINA
+	MSG_SOLICITUD_TAMANIO_PAGINA,
+	MSG_RESIZE_PROCESO,
+	MSG_STATUS_RESIZE_PROCESO
 } cod_op;
 
 typedef enum tipo_interfaz {
@@ -70,7 +72,8 @@ typedef enum motivo_exit {
 typedef enum motivo_blocked {
 	SIN_MOTIVO_BLOCKED,
 	INTERFAZ,
-	RECURSO
+	RECURSO,
+	OUT_OF_MEMORY
 } motivo_blocked;
 
 typedef enum estado_proceso {

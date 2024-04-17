@@ -64,4 +64,10 @@ typedef struct t_instruccion {
 	char* parametro_5;
 } t_instruccion;
 
+typedef struct t_entrada_tlb {
+	uint32_t pid;
+	uint32_t pagina;
+	uint32_t desplazamiento;
+} t_entrada_tlb;
+
 #endif /* HEADERS_MODELS_H_ */

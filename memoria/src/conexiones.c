@@ -11,6 +11,9 @@ void operar(int *socket_cliente) {
 		dt_proxima_instruccion* proxima_instruccion;
 		t_instruccion* instruccion;
 		switch(paquete->codigo_operacion) {
+			case MSG_SOLICITUD_TAMANIO_PAGINA:
+				request_tamanitamanio_pagina(*socket_cliente, app_config->tam_pagina);
+			break;
 			case MSG_INICIAR_PROCESO:
 				iniciar_proceso = deserializar_iniciar_proceso(paquete->buffer);
 				cargar_instrucciones(iniciar_proceso->pid, iniciar_proceso->path);

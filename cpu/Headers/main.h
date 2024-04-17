@@ -12,6 +12,7 @@ t_log* app_log;
 int socket_memoria;
 int socket_escucha_interrupt;
 int socket_escucha_dispatch;
+int tamanio_pagina;
 sem_t sem_conexiones;
 int existe_interrupcion;
 uint8_t motivo_interrupt_bloqueo;

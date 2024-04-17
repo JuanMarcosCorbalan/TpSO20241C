@@ -54,6 +54,9 @@ void operar_interrupt(int* socket_cliente) {
 
 void iniciar_conexion_memoria() {
 	socket_memoria = establecer_conexion_cliente(app_config->ip_memoria, app_config->puerto_memoria);
+
+	request_solicitud_tamanio_pagina(socket_memoria);
+	tamanio_pagina = deserializar_tamanio_pagina(socket_memoria);
 	log_info(app_log, "Se establece conexión con Memoria con el socket id %d", socket_memoria);
 	sem_post(&sem_conexiones);
 }
