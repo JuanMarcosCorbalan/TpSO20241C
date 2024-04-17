@@ -57,22 +57,17 @@ void iniciar_conexion_memoria() {
 
 	request_solicitud_tamanio_pagina(socket_memoria);
 	tamanio_pagina = deserializar_tamanio_pagina(socket_memoria);
-	log_info(app_log, "Se establece conexión con Memoria con el socket id %d", socket_memoria);
 	sem_post(&sem_conexiones);
 }
 
 void iniciar_servidor_dispatch() {
 	socket_escucha_dispatch = crear_socket_escucha(app_config->puerto_escucha_dispatch, 1);
 
-	log_info(app_log, "Se crea conexión para la escucha de Dispatch con el socket id %d", socket_escucha_dispatch);
-
 	int *socket_cliente = malloc(sizeof(int));
 	*socket_cliente = accept(socket_escucha_dispatch, NULL, NULL);
 
 	if(*socket_cliente < 0)
 		abort();
-
-	log_info(app_log, "Se establece conexión con el cliente a dispatch con el socket id %d", *socket_cliente);
 
 	int estado_comunicacion = recv_handshake(*socket_cliente);
 
@@ -85,15 +80,11 @@ void iniciar_servidor_dispatch() {
 void iniciar_servidor_interrupt() {
 	socket_escucha_interrupt = crear_socket_escucha(app_config->puerto_escucha_interrupt, 1);
 
-	log_info(app_log, "Se crea conexión para la escucha de Interrupt con el socket id %d", socket_escucha_interrupt);
-
 	int *socket_cliente = malloc(sizeof(int));
 	*socket_cliente = accept(socket_escucha_interrupt, NULL, NULL);
 
 	if(*socket_cliente < 0)
 		abort();
-
-	log_info(app_log, "Se establece conexión con el cliente a interrupt con el socket id %d", *socket_cliente);
 
 	int estado_comunicacion = recv_handshake(*socket_cliente);
 
