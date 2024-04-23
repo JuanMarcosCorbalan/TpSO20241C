@@ -50,11 +50,9 @@ void desbloquear_proceso_recurso(char* nombre) {
 
 		if(strcmp(app_config->algoritmo_planificacion, "VRR") && aux_proceso->quantum_ejecutados <= app_config->quantum && aux_proceso->quantum_ejecutados > 1) {
 			agregar_pcb(aux_proceso, V_READY);
-			logear_ingreso_v_ready();
 		}
 		else {
 			agregar_pcb(aux_proceso, READY);
-			logear_ingreso_ready();
 		}
 
 		sem_post(&sem_lista_ready);

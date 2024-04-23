@@ -6,6 +6,7 @@
 #include "config.h"
 #include "log.h"
 #include "conexiones.h"
+#include <commons/collections/list.h>
 
 t_cpu_config* app_config;
 t_log* app_log;
@@ -17,5 +18,6 @@ sem_t sem_conexiones;
 int existe_interrupcion;
 uint8_t motivo_interrupt_bloqueo;
 uint8_t motivo_interrupt_exit;
+t_list* lista_tlb;
 
 #endif /* HEADERS_MAIN_H_ */

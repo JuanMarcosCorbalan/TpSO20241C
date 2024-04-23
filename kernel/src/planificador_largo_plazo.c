@@ -10,6 +10,8 @@ void planificador_largo_plazo() {
 		sem_wait(&sem_lista_new);
 		sem_wait(&sem_grado_multiprogramacion);
 
+		pthread_mutex_lock(&mutex_planificador_largo_plazo);
+
 		pthread_mutex_lock(&mutex_lista_new);
 		t_pcb* proceso = list_remove(lista_new, 0);
 		pthread_mutex_unlock(&mutex_lista_new);
@@ -19,6 +21,8 @@ void planificador_largo_plazo() {
 		agregar_pcb(proceso, READY);
 
 		sem_post(&sem_lista_ready);
+
+		pthread_mutex_unlock(&mutex_planificador_largo_plazo);
 	}
 }
 

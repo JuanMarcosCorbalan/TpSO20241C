@@ -10,8 +10,13 @@ void operar(int *socket_cliente) {
 		dt_iniciar_proceso* iniciar_proceso;
 		dt_proxima_instruccion* proxima_instruccion;
 		t_instruccion* instruccion;
+		dt_resize_proceso* resize_proceso;
+		uint32_t status_resize;
+		dt_marco_memoria* marco_memoria;
+		uint32_t marco;
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
+				sleep(app_config->retardo_respuesta);
 				request_tamanio_pagina(*socket_cliente, app_config->tam_pagina);
 			break;
 			case MSG_INICIAR_PROCESO:
@@ -29,6 +34,20 @@ void operar(int *socket_cliente) {
 				instruccion = obtener_instruccion(proxima_instruccion->pid, proxima_instruccion->program_counter);
 				sleep(app_config->retardo_respuesta);
 				request_instruccion(*socket_cliente, instruccion);
+				break;
+			case MSG_RESIZE_PROCESO:
+				resize_proceso = deserializar_resize_proceso(paquete->buffer);
+				// LE HAGO RESIZE AL PROCESO
+				status_resize = 1; // ESTO LO REEMPLAZO POR EL ESTADO DE RESIZE. 1 PARA OK, 0 PARA ERROR
+				sleep(app_config->retardo_respuesta);
+				request_status_resize_proceso(*socket_cliente, status_resize);
+				break;
+			case MSG_MARCO_PAGINA:
+				marco_memoria = deserializar_marco_memoria(paquete->buffer);
+				marco = 1; // LOGICA PARA OBTENER EL MARCO DE LA PAGINA Y LO IGUALO AL MARCO
+				sleep(app_config->retardo_respuesta);
+				request_numero_marco_memoria(*socket_cliente, marco);
+				free(marco_memoria);
 				break;
 			default:
 				break;

@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+#include <commons/collections/list.h>
+#include <commons/temporal.h>
 
 extern t_log* app_log;
 extern t_cpu_config* app_config;
@@ -24,6 +26,7 @@ extern int existe_interrupcion;
 extern int tamanio_pagina;
 extern uint8_t motivo_interrupt_bloqueo;
 extern uint8_t motivo_interrupt_exit;
+extern t_list* lista_tlb;
 
 void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente);
 

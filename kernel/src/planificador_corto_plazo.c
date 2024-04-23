@@ -41,6 +41,7 @@ void ejecutar_proceso(t_pcb* proceso) {
 		dt_contexto_proceso* contexto_proceso;
 		t_interfaz_io* aux_interfaz;
 		dt_recurso_proceso* recurso_proceso;
+		dt_std* std;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_DESALOJO:
@@ -54,7 +55,6 @@ void ejecutar_proceso(t_pcb* proceso) {
 				else {
 					logear_fin_quantum(proceso->pid);
 					agregar_pcb(proceso, READY);
-					logear_ingreso_ready();
 					sem_post(&sem_lista_ready);
 				}
 
@@ -116,7 +116,7 @@ void ejecutar_proceso(t_pcb* proceso) {
 					break;
 				}
 
-				request_ejecutar_instruccion(*aux_interfaz->socket_io, "IO_GEN_SLEEP", sleep_proceso->unidad_trabajo, proceso->pid);
+				request_io_gen_sleep(*aux_interfaz->socket_io, "IO_GEN_SLEEP", sleep_proceso->unidad_trabajo, proceso->pid);
 				list_add(aux_interfaz->bloqueados, proceso);
 				logear_motivo_bloqueo(proceso->pid, sleep_proceso->nombre_interfaz);
 				bloquear(proceso);
@@ -134,6 +134,60 @@ void ejecutar_proceso(t_pcb* proceso) {
 				seguir_operando = 0;
 				break;
 
+			case MSG_IO_STDIN_READ:
+				std = deserializar_std(paquete->buffer);
+				actualizar_contexto_pcb(std->contexto_proceso, proceso);
+
+				if(!validar_disponibilidad_interfaz(std->nombre_interfaz)) {
+					finalizar(proceso);
+					seguir_operando = 0;
+					break;
+				}
+
+				aux_interfaz = obtener_interfaz(std->nombre_interfaz);
+				request_validar_interfaz(*aux_interfaz->socket_io, "IO_STDIN_READ");
+
+				sem_wait(&aux_interfaz->sem_bloqueo_global);
+
+				if(aux_interfaz->estado_validacion == 0) {
+					finalizar(proceso);
+					seguir_operando = 0;
+					break;
+				}
+
+				request_io_stdin_read(*aux_interfaz->socket_io, std->contexto_proceso->pid, std->direccion_fisica, std->tamanio);
+				list_add(aux_interfaz->bloqueados, proceso);
+				logear_motivo_bloqueo(proceso->pid, std->nombre_interfaz);
+				bloquear(proceso);
+				seguir_operando = 0;
+				break;
+			case MSG_IO_STDOUT_WRITE:
+				std = deserializar_std(paquete->buffer);
+				actualizar_contexto_pcb(std->contexto_proceso, proceso);
+
+				if(!validar_disponibilidad_interfaz(std->nombre_interfaz)) {
+					finalizar(proceso);
+					seguir_operando = 0;
+					break;
+				}
+
+				aux_interfaz = obtener_interfaz(std->nombre_interfaz);
+				request_validar_interfaz(*aux_interfaz->socket_io, "IO_STDOUT_WRITE");
+
+				sem_wait(&aux_interfaz->sem_bloqueo_global);
+
+				if(aux_interfaz->estado_validacion == 0) {
+					finalizar(proceso);
+					seguir_operando = 0;
+					break;
+				}
+
+				request_io_stdout_write(*aux_interfaz->socket_io, std->contexto_proceso->pid, std->direccion_fisica, std->tamanio);
+				list_add(aux_interfaz->bloqueados, proceso);
+				logear_motivo_bloqueo(proceso->pid, std->nombre_interfaz);
+				bloquear(proceso);
+				seguir_operando = 0;
+				break;
 			default:
 				break;
 		}

@@ -64,17 +64,16 @@ void iniciar_proceso(char* path) {
 	t_pcb* nuevo_pcb = crear_pcb(path);
 	pthread_mutex_unlock(&mutex_contador_pid);
 
-
 	pthread_mutex_lock(&mutex_lista_global);
 	list_add(lista_global, (void*) nuevo_pcb);
 	pthread_mutex_unlock(&mutex_lista_global);
+
+	logear_creacion_proceso(nuevo_pcb->pid);
 
 	pthread_mutex_lock(&mutex_lista_new);
 	list_add(lista_new, (void*) nuevo_pcb);
 	pthread_mutex_unlock(&mutex_lista_new);
 	sem_post(&sem_lista_new);
-
-	logear_creacion_proceso(nuevo_pcb->pid);
 
 	free(path);
 }

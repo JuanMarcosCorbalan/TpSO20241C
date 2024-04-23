@@ -80,7 +80,7 @@ uint8_t deserializar_estado_validacion_instruccion(t_buffer* buffer) {
 	return estado_validacion;
 }
 
-void request_ejecutar_instruccion(int socket, char* instruccion, uint32_t unidad_trabajo, uint32_t pid) {
+void request_io_gen_sleep(int socket, char* instruccion, uint32_t unidad_trabajo, uint32_t pid) {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 	buffer->size = sizeof(uint32_t) * 3 + strlen(instruccion) + 1;
 	void* stream = malloc(buffer->size);
@@ -97,11 +97,11 @@ void request_ejecutar_instruccion(int socket, char* instruccion, uint32_t unidad
 
 	buffer->stream = stream;
 
-	send_paquete(buffer, MSG_EJECUTAR_INTERFAZ, socket);
+	send_paquete(buffer, MSG_IO_GEN_SLEEP, socket);
 }
 
-dt_instruccion* deserializar_ejecutar_instruccion(t_buffer* buffer) {
-	dt_instruccion* instruccion = malloc(sizeof(dt_instruccion));
+dt_io_sleep* deserializar_io_gen_sleep(t_buffer* buffer) {
+	dt_io_sleep* instruccion = malloc(sizeof(dt_io_sleep));
 	void* stream = buffer->stream;
 
 	memcpy(&instruccion->pid, stream, sizeof(uint32_t));
@@ -139,3 +139,54 @@ uint32_t deserializar_desbloquear_proceso(t_buffer* buffer) {
 
 	return pid;
 }
+
+void request_io_stdin_read(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 3;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_STDIN_READ, socket);
+}
+
+void request_io_stdout_write(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 3;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_STDOUT_WRITE, socket);
+}
+
+dt_io_std* deserializar_io_std(t_buffer* buffer) {
+	dt_io_std* io_std = malloc(sizeof(dt_io_std));
+	void* stream = buffer->stream;
+
+	memcpy(&io_std->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_std->direccion_fisica, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_std->tamanio, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	return io_std;
+}
+

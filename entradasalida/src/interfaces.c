@@ -5,7 +5,7 @@ uint8_t obtener_tipo_interfaz() {
 		return GENERICA;
 	else if(strcmp(app_config->tipo_infertaz, "STDOUT") == 0)
 		return STDOUT;
-	else if(strcmp(app_config->tipo_infertaz, "STRIN") == 0)
+	else if(strcmp(app_config->tipo_infertaz, "STDIN") == 0)
 		return STDIN;
 	else if(strcmp(app_config->tipo_infertaz, "DIALFS") == 0)
 		return DIALFS;
@@ -47,7 +47,8 @@ void operar_kernel() {
 		t_paquete* paquete = recv_paquete(socket_kernel);
 		int operacion_valida = 0;
 		char* nombre_instruccion;
-		dt_instruccion* instruccion;
+		dt_io_sleep* io_sleep;
+		dt_io_std* io_std;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_VALIDAR_INTERFAZ:
@@ -56,12 +57,28 @@ void operar_kernel() {
 				request_estado_validacion_instruccion(socket_kernel, operacion_valida);
 				free(nombre_instruccion);
 				break;
-			case MSG_EJECUTAR_INTERFAZ:
-				instruccion = deserializar_ejecutar_instruccion(paquete->buffer);
-				sleep((app_config->tiempo_unidad_trabajo * instruccion->unidad_trabajo)/100);
-				request_desbloquear_proceso(socket_kernel, instruccion->pid);
-				free(instruccion->instruccion);
-				free(instruccion);
+			case MSG_IO_GEN_SLEEP:
+				io_sleep = deserializar_io_gen_sleep(paquete->buffer);
+				sleep((app_config->tiempo_unidad_trabajo * io_sleep->unidad_trabajo)/100);
+				request_desbloquear_proceso(socket_kernel, io_sleep->pid);
+				free(io_sleep->instruccion);
+				free(io_sleep);
+				break;
+			case MSG_IO_STDIN_READ:
+				io_std = deserializar_io_std(paquete->buffer);
+				// ACÁ SE EJECUTA LA LÓGICA DEL STDIN_READ
+				// UNA VEZ QUE TERMINE, TENEMOS QUE CONTINUAR CON EL MENSAJE DE DESBLOQUEAR_PROCESO
+				sleep(app_config->tiempo_unidad_trabajo / 100);
+				request_desbloquear_proceso(socket_kernel, io_std->pid);
+				free(io_std);
+				break;
+			case MSG_IO_STDOUT_WRITE:
+				io_std = deserializar_io_std(paquete->buffer);
+				// ACÁ SE EJECUTA LA LÓGICA DEL STDOUT_READ
+				// UNA VEZ QUE TERMINE, TENEMOS QUE CONTINUAR CON EL MENSAJE DE DESBLOQUEAR_PROCESO
+				sleep(app_config->tiempo_unidad_trabajo / 100);
+				request_desbloquear_proceso(socket_kernel, io_std->pid);
+				free(io_std);
 				break;
 			default:
 				seguir_operando = 0;

@@ -7,6 +7,7 @@ int main(int argc, char *argv[]) {
 	existe_interrupcion = 0;
 	motivo_interrupt_bloqueo = 0;
 	motivo_interrupt_exit = 0;
+	lista_tlb = list_create();
 
 	iniciar_conexiones();
 

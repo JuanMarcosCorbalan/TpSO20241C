@@ -240,3 +240,59 @@ uint32_t deserializar_status_resize_proceso(int socket) {
 
 	return status_resize;
 }
+
+void request_marco_memoria(int socket, uint32_t pid, uint32_t numero_pagina) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 2;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &numero_pagina, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_MARCO_PAGINA, socket);
+}
+
+dt_marco_memoria* deserializar_marco_memoria(t_buffer* buffer) {
+	dt_marco_memoria* marco_memoria = malloc(sizeof(dt_marco_memoria));
+	void* stream = buffer->stream;
+
+	memcpy(&marco_memoria->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&marco_memoria->numero_pagina, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	return marco_memoria;
+}
+
+void request_numero_marco_memoria(int socket, uint32_t numero_marco) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &numero_marco, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_MARCO_PAGINA, socket);
+}
+
+uint32_t deserializar_numero_marco_memoria(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t numero_marco;
+
+	memcpy(&numero_marco, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return numero_marco;
+}

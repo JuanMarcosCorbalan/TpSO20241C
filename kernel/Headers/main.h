@@ -39,6 +39,7 @@ pthread_mutex_t mutex_lista_blocked;
 pthread_mutex_t mutex_lista_exit;
 pthread_mutex_t mutex_lista_global;
 pthread_mutex_t mutex_lista_interfaz;
+pthread_mutex_t mutex_planificador_largo_plazo;
 
 int contador_pid;
 int planificacion_pausada;

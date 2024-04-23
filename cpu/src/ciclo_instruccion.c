@@ -92,11 +92,108 @@ int obtener_valor_registro(dt_contexto_proceso* contexto_proceso, char* registro
 	return 0;
 }
 
-t_entrada_tlb* obtener_entrada(int direccion_logica) {
-	t_entrada_tlb* entrada = malloc(sizeof(t_entrada_tlb));
-	entrada->pagina = floor(direccion_logica / tamanio_pagina);
-	entrada->desplazamiento = direccion_logica - entrada->pagina * tamanio_pagina;
+int existe_entrada_tlb(uint32_t pid, uint32_t numero_pagina) {
+	bool existe_entrada(void* elem) {
+		t_entrada* aux_entrada = (t_entrada*) elem;
+		if(aux_entrada->pid == pid && aux_entrada->pagina == numero_pagina)
+			return 1;
+		return 0;
+	}
+
+	return list_any_satisfy(lista_tlb, existe_entrada);
+}
+
+t_entrada* obtener_entrada_tlb(uint32_t pid, uint32_t numero_pagina) {
+	bool buscar_entrada(void* elem) {
+		t_entrada* aux_entrada = (t_entrada*) elem;
+		if(aux_entrada->pid == pid && aux_entrada->pagina == numero_pagina)
+			return 1;
+		return 0;
+	}
+
+	t_entrada* entrada = list_find(lista_tlb, buscar_entrada);
+
+	if(strcmp(app_config->algoritmo_tlb, "LRU")==0) {
+		free(entrada->ultimo_uso);
+		entrada->ultimo_uso = temporal_get_string_time("%H:%M:%S:%MS");
+	}
+
 	return entrada;
+}
+
+void actualizar_tlb(t_entrada* nueva_entrada) {
+	if(app_config->cantidad_entradas_tlb > lista_tlb->elements_count) {
+		list_add(lista_tlb, nueva_entrada);
+		return;
+	}
+
+	if(strcmp(app_config->algoritmo_tlb, "FIFO")) {
+		t_entrada* entrada_fifo = list_remove(lista_tlb, 0);
+		list_add(lista_tlb, nueva_entrada);
+		free(entrada_fifo);
+	}
+	else {
+	    t_entrada* entrada_lru = list_get(lista_tlb, 0);
+
+	    int index = 0;
+	    int index_change = 0;
+
+	    void obtener_lru(void* elem) {
+	    	index += 1;
+	    	t_entrada* aux_entrada = (t_entrada*) elem;
+	    	if(strcmp(aux_entrada->ultimo_uso, entrada_lru->ultimo_uso) < 0) {
+	    		entrada_lru = aux_entrada;
+	    		index_change = index - 1;
+	    	}
+	    }
+
+	    list_iterate(lista_tlb, obtener_lru);
+	    list_replace(lista_tlb, index_change, nueva_entrada);
+	    free(entrada_lru->ultimo_uso);
+	    free(entrada_lru);
+	}
+}
+
+uint32_t obtener_marco(uint32_t pid, uint32_t numero_pagina) {
+	t_entrada* entrada;
+
+	if(existe_entrada_tlb(pid, numero_pagina)) {
+		logear_tlb_hit(pid, numero_pagina);
+		entrada = obtener_entrada_tlb(pid, numero_pagina);
+	}
+	else {
+		logear_tlb_miss(pid, numero_pagina);
+		entrada = malloc(sizeof(t_entrada));
+		entrada->pid = pid;
+		entrada->pagina = numero_pagina;
+		request_marco_memoria(socket_memoria, pid, numero_pagina);
+		entrada->marco = deserializar_numero_marco_memoria(socket_memoria);
+
+		if(strcmp(app_config->algoritmo_tlb, "LRU") ==0 )
+			entrada->ultimo_uso = temporal_get_string_time("%H:%M:%S:%MS");
+
+		actualizar_tlb(entrada);
+	}
+
+	logear_obtener_marco(pid, numero_pagina, entrada->marco);
+	return entrada->marco;
+}
+
+uint32_t obtener_direccion_fisica(uint32_t pid, uint32_t direccion_logica) {
+	uint32_t numero_pagina = floor(direccion_logica / tamanio_pagina);
+	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
+	uint32_t numero_marco;
+
+	if(app_config->cantidad_entradas_tlb > 0)
+		numero_marco = obtener_marco(pid, numero_pagina);
+
+	else {
+		request_marco_memoria(socket_memoria, pid, numero_pagina);
+		numero_marco = deserializar_numero_marco_memoria(socket_memoria);
+		logear_obtener_marco(pid, numero_pagina, numero_marco);
+	}
+
+	return tamanio_pagina * numero_marco + desplazamiento;
 }
 
 void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente) {
@@ -108,6 +205,8 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		if(existe_interrupcion) {
 			if(motivo_interrupt_bloqueo != 0) {
 				contexto_proceso->motivo_blocked = motivo_interrupt_bloqueo;
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
 				request_desalojo_proceso(socket_cliente, contexto_proceso);
 			}
 			else {
@@ -142,11 +241,9 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 			contexto_proceso->quantum_ejecutados += 1;
 
 		// EXECUTE
-		int valor_registro_destino;
-		int valor_registro_origen;
-		int valor_destino;
-		int valor_tamanio;
-		t_entrada_tlb* entrada_tlb;
+		uint32_t valor_registro_destino;
+		uint32_t valor_registro_origen;
+		uint32_t direccion_fisica;
 
 		switch(tipo_instruccion) {
 			case SET:
@@ -181,11 +278,26 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case IO_GEN_SLEEP:
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				request_sleep_proceso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				seguir_ejecutando = 0;
 				break;
 			case IO_STDIN_READ:
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				request_stdin_read(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
+				seguir_ejecutando = 0;
 				break;
 			case IO_STDOUT_WRITE:
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				request_stdout_write(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
 				seguir_ejecutando = 0;
 				break;
 			case IO_FS_CREATE:
@@ -204,8 +316,8 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				seguir_ejecutando = 0;
 				break;
 			case RESIZE:
-				request_resize_proceso(socket_cliente, contexto_proceso->pid, atoi(instruccion_completa->parametro_1));
-				if(deserializar_status_resize_proceso(socket_cliente) == 0) {
+				request_resize_proceso(socket_memoria, contexto_proceso->pid, atoi(instruccion_completa->parametro_1));
+				if(deserializar_status_resize_proceso(socket_memoria) == 0) {
 					contexto_proceso->motivo_exit = OUT_OF_MEMORY;
 					request_exit_proceso(socket_cliente, contexto_proceso);
 					seguir_ejecutando = 0;
@@ -213,7 +325,6 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				break;
 			case EXIT:
 				contexto_proceso->motivo_exit = SUCCESS;
-				logear_instruccion_ejecutada(contexto_proceso->pid, instruccion_completa->instruccion, "");
 				request_exit_proceso(socket_cliente, contexto_proceso);
 				seguir_ejecutando = 0;
 				break;
@@ -222,6 +333,9 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		}
 
 		switch(tipo_instruccion) {
+			case EXIT:
+				logear_instruccion_ejecutada(contexto_proceso->pid, instruccion_completa->instruccion, "");
+			break;
 			case RESIZE:
 			case COPY_STRING:
 			case WAIT:

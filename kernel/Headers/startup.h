@@ -35,6 +35,7 @@ extern pthread_mutex_t mutex_lista_global;
 extern pthread_mutex_t mutex_contador_pid;
 extern pthread_mutex_t mutex_ejecucion_proceso;
 extern pthread_mutex_t mutex_lista_interfaz;
+extern pthread_mutex_t mutex_planificador_largo_plazo;
 
 void iniciar_estructuras();
 

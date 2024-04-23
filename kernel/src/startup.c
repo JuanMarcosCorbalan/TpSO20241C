@@ -30,4 +30,5 @@ void iniciar_estructuras() {
 	pthread_mutex_init(&mutex_lista_interfaz, NULL);
 	pthread_mutex_init(&mutex_contador_pid, NULL);
 	pthread_mutex_init(&mutex_ejecucion_proceso, NULL);
+	pthread_mutex_init(&mutex_planificador_largo_plazo, NULL);
 }

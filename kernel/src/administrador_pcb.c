@@ -115,6 +115,7 @@ void agregar_pcb(t_pcb* proceso, uint8_t estado) {
 		pthread_mutex_lock(&mutex_lista_new);
 		list_add(lista_new, (void*) proceso);
 		pthread_mutex_unlock(&mutex_lista_new);
+		logear_ingreso_v_ready();
 	}
 	else if(estado == READY) {
 		logear_cambio_estado(proceso->pid, convertir_estado_proceso(proceso->estado), "READY");
