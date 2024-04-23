@@ -67,17 +67,29 @@ void operar_kernel() {
 			case MSG_IO_STDIN_READ:
 				io_std = deserializar_io_std(paquete->buffer);
 				// ACÁ SE EJECUTA LA LÓGICA DEL STDIN_READ
+				log_info(app_log, "Ingrese cadena de caracteres para guardar en memoria");
+				char* leido = readline("> ");
+
+				// QUEDARIA ENVIAR A MEMORIA
+
 				// UNA VEZ QUE TERMINE, TENEMOS QUE CONTINUAR CON EL MENSAJE DE DESBLOQUEAR_PROCESO
 				sleep(app_config->tiempo_unidad_trabajo / 100);
 				request_desbloquear_proceso(socket_kernel, io_std->pid);
+				free(leido);
 				free(io_std);
 				break;
 			case MSG_IO_STDOUT_WRITE:
 				io_std = deserializar_io_std(paquete->buffer);
 				// ACÁ SE EJECUTA LA LÓGICA DEL STDOUT_READ
+				// SE TIENE QUE RECIBIR DE MEMORIA
+
+				char* mensaje_a_mostrar = recv_out_memoria();
+
+				log_info(app_log, "Se leyo de memoria: ", mensaje_a_mostrar);
 				// UNA VEZ QUE TERMINE, TENEMOS QUE CONTINUAR CON EL MENSAJE DE DESBLOQUEAR_PROCESO
 				sleep(app_config->tiempo_unidad_trabajo / 100);
 				request_desbloquear_proceso(socket_kernel, io_std->pid);
+				free(mensaje_a_mostrar);
 				free(io_std);
 				break;
 			default:
