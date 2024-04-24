@@ -3,9 +3,9 @@
 uint8_t convertir_tipo_instruccion(char* instruccion) {
 	if(strcmp(instruccion, "SET") == 0)
 		return SET;
-	else if(strcmp(instruccion, "MOVE_IN") == 0)
+	else if(strcmp(instruccion, "MOV_IN") == 0)
 		return MOV_IN;
-	else if(strcmp(instruccion, "MOVE_OUT") == 0)
+	else if(strcmp(instruccion, "MOV_OUT") == 0)
 		return MOV_OUT;
 	else if(strcmp(instruccion, "SUM") == 0)
 		return SUM;
@@ -243,15 +243,33 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		// EXECUTE
 		uint32_t valor_registro_destino;
 		uint32_t valor_registro_origen;
+		uint32_t valor_registro_dato;
 		uint32_t direccion_fisica;
+		uint32_t estado_escritura;
 
 		switch(tipo_instruccion) {
 			case SET:
 				setear_registro(contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				break;
 			case MOV_IN:
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+				request_mov_in(socket_memoria, contexto_proceso->pid ,direccion_fisica);
+				valor_registro_dato = deserializar_valor_mov_in(socket_memoria);
+				setear_registro(contexto_proceso, instruccion_completa->parametro_1, valor_registro_dato);
+				logear_lectura_memoria(contexto_proceso->pid, direccion_fisica, valor_registro_dato);
 				break;
 			case MOV_OUT:
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_1));
+				valor_registro_dato = obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2);
+				request_mov_out(socket_memoria, contexto_proceso->pid, valor_registro_dato, direccion_fisica);
+				estado_escritura = deserializar_status_mov_out(socket_memoria);
+				if(estado_escritura == 0) {
+					contexto_proceso->motivo_exit = INVALID_WRITE;
+					request_exit_proceso(socket_cliente, contexto_proceso);
+					seguir_ejecutando = 0;
+				}
+				else
+					logear_escritura_memoria(contexto_proceso->pid, direccion_fisica, valor_registro_dato);
 				break;
 			case SUM:
 				valor_registro_destino = obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_1);

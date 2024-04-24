@@ -23,6 +23,12 @@ typedef struct dt_marco_memoria {
 	uint32_t numero_pagina;
 } dt_marco_memoria;
 
+typedef struct dt_mov {
+	uint32_t pid;
+	uint32_t valor_registro;
+	uint32_t direccion_fisica;
+} dt_mov;
+
 void request_proxima_instruccion(int socket, uint32_t pid, uint32_t program_counter);
 dt_proxima_instruccion* deserializar_proxima_instruccion(t_buffer* buffer);
 
@@ -45,5 +51,15 @@ dt_marco_memoria* deserializar_marco_memoria(t_buffer* buffer);
 
 void request_numero_marco_memoria(int socket, uint32_t numero_marco);
 uint32_t deserializar_numero_marco_memoria(int socket);
+
+void request_mov_in(int socket, uint32_t pid, uint32_t direccion_fisica);
+void request_mov_out(int socket, uint32_t pid, uint32_t valor_registro, uint32_t direccion_fisica);
+dt_mov* deserializar_mov(t_buffer* buffer);
+
+void request_valor_mov_in(int socket, uint32_t valor);
+uint32_t deserializar_valor_mov_in(int socket);
+
+void request_status_mov_out(int socket, uint32_t estado);
+uint32_t deserializar_status_mov_out(int socket);
 
 #endif /* HEADERS_MENSAJERIA_CPU_MEMORIA_H_ */

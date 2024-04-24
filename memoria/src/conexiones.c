@@ -7,13 +7,17 @@ void operar(int *socket_cliente) {
 		t_paquete* paquete = recv_paquete(*socket_cliente);
 
 		uint32_t pid;
+		uint32_t estado_escritura;
+		uint32_t valor_registro;
+		uint32_t marco;
+		uint32_t status_resize;
 		dt_iniciar_proceso* iniciar_proceso;
 		dt_proxima_instruccion* proxima_instruccion;
-		t_instruccion* instruccion;
 		dt_resize_proceso* resize_proceso;
-		uint32_t status_resize;
 		dt_marco_memoria* marco_memoria;
-		uint32_t marco;
+		dt_mov* mov;
+		t_instruccion* instruccion;
+
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
 				sleep(app_config->retardo_respuesta);
@@ -37,8 +41,7 @@ void operar(int *socket_cliente) {
 				break;
 			case MSG_RESIZE_PROCESO:
 				resize_proceso = deserializar_resize_proceso(paquete->buffer);
-				// LE HAGO RESIZE AL PROCESO
-				status_resize = 1; // ESTO LO REEMPLAZO POR EL ESTADO DE RESIZE. 1 PARA OK, 0 PARA ERROR
+				status_resize = 1; //LOGICA PARA HACER RESIZE. 1 PARA OK, 0 PARA ERROR
 				sleep(app_config->retardo_respuesta);
 				request_status_resize_proceso(*socket_cliente, status_resize);
 				break;
@@ -49,6 +52,18 @@ void operar(int *socket_cliente) {
 				request_numero_marco_memoria(*socket_cliente, marco);
 				free(marco_memoria);
 				break;
+			case MSG_MOV_IN:
+				mov = deserializar_mov(paquete->buffer);
+				valor_registro = 128; // ACÁ TENGO QUE DEVOLVER LA LECTURA
+				sleep(app_config->retardo_respuesta);
+				request_valor_mov_in(*socket_cliente, valor_registro);
+				break;
+			case MSG_MOV_OUT:
+				mov = deserializar_mov(paquete->buffer);
+				estado_escritura = 1; // LOGICA PARA ESCRITURA. 1 PARA OK. 0 ERROR
+				sleep(app_config->retardo_respuesta);
+				request_status_mov_out(*socket_cliente, estado_escritura);
+				break;
 			default:
 				break;
 		}
@@ -57,6 +72,13 @@ void operar(int *socket_cliente) {
 			case MSG_INICIAR_PROCESO:
 				free(iniciar_proceso->path);
 				free(iniciar_proceso);
+				break;
+			case MSG_RESIZE_PROCESO:
+				free(resize_proceso);
+				break;
+			case MSG_MOV_IN:
+			case MSG_MOV_OUT:
+				free(mov);
 				break;
 			default:
 				break;

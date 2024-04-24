@@ -3,9 +3,9 @@
 uint8_t convertir_tipo_instruccion(char* instruccion) {
 	if(strcmp(instruccion, "SET") == 0)
 		return SET;
-	else if(strcmp(instruccion, "MOVE_IN") == 0)
+	else if(strcmp(instruccion, "MOV_IN") == 0)
 		return MOV_IN;
-	else if(strcmp(instruccion, "MOVE_OUT") == 0)
+	else if(strcmp(instruccion, "MOV_OUT") == 0)
 		return MOV_OUT;
 	else if(strcmp(instruccion, "SUM") == 0)
 		return SUM;

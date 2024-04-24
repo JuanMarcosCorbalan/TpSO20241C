@@ -296,3 +296,110 @@ uint32_t deserializar_numero_marco_memoria(int socket) {
 
 	return numero_marco;
 }
+
+void request_mov_in(int socket, uint32_t pid, uint32_t direccion_fisica) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 3;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	uint32_t valor_registro = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &valor_registro, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_MOV_IN, socket);
+}
+
+void request_mov_out(int socket, uint32_t pid, uint32_t valor_registro, uint32_t direccion_fisica) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 3;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &valor_registro, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_MOV_OUT, socket);
+}
+
+dt_mov* deserializar_mov(t_buffer* buffer) {
+	dt_mov* mov = malloc(sizeof(dt_mov));
+	void* stream = buffer->stream;
+
+	memcpy(&mov->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&mov->direccion_fisica, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&mov->valor_registro, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	return mov;
+}
+
+void request_valor_mov_in(int socket, uint32_t valor) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &valor, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_MOV_IN, socket);
+}
+
+uint32_t deserializar_valor_mov_in(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t valor;
+
+	memcpy(&valor, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return valor;
+}
+
+void request_status_mov_out(int socket, uint32_t estado) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &estado, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_MOV_OUT, socket);
+}
+
+uint32_t deserializar_status_mov_out(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t status;
+
+	memcpy(&status, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return status;
+}
+

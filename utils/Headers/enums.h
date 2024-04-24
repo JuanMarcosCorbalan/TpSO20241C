@@ -25,7 +25,9 @@ typedef enum cod_op {
 	MSG_STATUS_RESIZE_PROCESO,
 	MSG_MARCO_PAGINA,
 	MSG_IO_STDOUT_WRITE,
-	MSG_IO_STDIN_READ
+	MSG_IO_STDIN_READ,
+	MSG_MOV_OUT,
+	MSG_MOV_IN
 } cod_op;
 
 typedef enum tipo_interfaz {
