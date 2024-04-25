@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct t_recurso_sistema {
 	char* nombre;
-	uint32_t cantidad;
+	int cantidad;
 	t_list* solicitud;
 	t_list* asignacion;
 } t_recurso_sistema;
@@ -63,5 +63,12 @@ typedef struct t_instruccion {
 	char* parametro_4;
 	char* parametro_5;
 } t_instruccion;
+
+typedef struct t_entrada {
+	uint32_t pid;
+	uint32_t pagina;
+	uint32_t marco;
+	char* ultimo_uso;
+} t_entrada;
 
 #endif /* HEADERS_MODELS_H_ */

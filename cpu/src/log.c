@@ -27,11 +27,11 @@ void logear_obtener_marco(uint32_t pid, uint32_t pagina, uint32_t marco) {
 	log_info(app_log, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, pagina, marco);
 }
 
-void logear_escritura_memoria(uint32_t pid, uint32_t direccion, char* valor) {
-	log_info(app_log, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion, valor);
+void logear_escritura_memoria(uint32_t pid, uint32_t direccion, uint32_t valor) {
+	log_info(app_log, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion, valor);
 }
-void logear_lectura_memoria(uint32_t pid, uint32_t direccion, char* valor) {
-	log_info(app_log, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion, valor);
+void logear_lectura_memoria(uint32_t pid, uint32_t direccion, uint32_t valor) {
+	log_info(app_log, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion, valor);
 }
 
 

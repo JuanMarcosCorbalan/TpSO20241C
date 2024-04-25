@@ -2,25 +2,21 @@
 
 void iniciar_conexion_memoria() {
 	socket_memoria = establecer_conexion_cliente(app_config->ip_memoria, app_config->puerto_memoria);
-	log_info(app_log, "Se establece conexión con Memoria con el socket id %d", socket_memoria);
 	sem_post(&sem_conexiones);
 }
 
 void iniciar_conexion_cpu_dispatch() {
 	socket_cpu_dispatch = establecer_conexion_cliente(app_config->ip_cpu, app_config->puerto_cpu_dispatch);
-	log_info(app_log, "Se establece conexión con Cpu-Dispatch con el socket id %d", socket_cpu_dispatch);
 	sem_post(&sem_conexiones);
 }
 
 void iniciar_conexion_cpu_interrupt() {
 	socket_cpu_interrupt = establecer_conexion_cliente(app_config->ip_cpu, app_config->puerto_cpu_interrupt);
-	log_info(app_log, "Se establece conexión con Cpu-Interrupt con el socket id %d", socket_cpu_interrupt);
 	sem_post(&sem_conexiones);
 }
 
 void iniciar_escucha_io() {
 	socket_escucha_io = crear_socket_escucha(app_config->puerto_escucha, 10);
-	log_info(app_log, "Se crea conexión para la escucha de IOs con el socket id %d", socket_escucha_io);
 
 	while(1) {
 		int *socket_io = malloc(sizeof(int));
@@ -28,8 +24,6 @@ void iniciar_escucha_io() {
 
 		if(*socket_io < 0)
 			abort();
-
-		log_info(app_log, "El cliente establece conexión con el socket id %d", *socket_io);
 
 		int estado_comunicacion = recv_handshake(*socket_io);
 		if(estado_comunicacion == 0)

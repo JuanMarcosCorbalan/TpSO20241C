@@ -62,8 +62,33 @@ void desbloquear_por_io(t_interfaz_io* interfaz, uint32_t pid) {
 
 	t_pcb* proceso_desbloqueado = list_remove_by_condition(interfaz->bloqueados, remover_por_pid);
 	remover_pcb(proceso_desbloqueado, proceso_desbloqueado->estado);
-	agregar_pcb(proceso_desbloqueado, READY);
+
+	if(strcmp(app_config->algoritmo_planificacion, "VRR") && proceso_desbloqueado->quantum_ejecutados <= app_config->quantum && proceso_desbloqueado->quantum_ejecutados > 1) {
+		agregar_pcb(proceso_desbloqueado, V_READY);
+	}
+	else {
+		agregar_pcb(proceso_desbloqueado, READY);
+	}
+
 	sem_post(&sem_lista_ready);
+}
+
+void finalizar_por_io(t_interfaz_io* interfaz, uint32_t pid) {
+	bool remover_por_pid(void* elem) {
+		t_pcb* aux_pcb = (t_pcb*) elem;
+		if(aux_pcb->pid == pid)
+			return 1;
+		return 0;
+	}
+
+	if(planificacion_pausada)
+		sem_wait(&sem_planificacion_pausada);
+
+	t_pcb* proceso_desbloqueado = list_remove_by_condition(interfaz->bloqueados, remover_por_pid);
+	remover_pcb(proceso_desbloqueado, proceso_desbloqueado->estado);
+	logear_fin_proceso(pid, "INVALID_WRITE");
+	agregar_pcb(proceso_desbloqueado, EXIT);
+	sem_post(&sem_grado_multiprogramacion);
 }
 
 void operar_io(int* socket_io) {
@@ -82,8 +107,12 @@ void operar_io(int* socket_io) {
 		uint32_t pid;
 
 		switch(paquete->codigo_operacion) {
+			case MSG_FINALIZAR_IO:
+				pid = deserializar_finalizar_proceso_io(paquete->buffer);
+				finalizar_por_io(interfaz, pid);
+			break;
 			case MSG_DESBLOQUEAR_IO:
-				pid = deserializar_desbloquear_proceso(paquete->buffer);
+				pid = deserializar_desbloquear_proceso_io(paquete->buffer);
 				desbloquear_por_io(interfaz, pid);
 				break;
 			case MSG_ESTADO_VALIDAR_INTERFAZ:

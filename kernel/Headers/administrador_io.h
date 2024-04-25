@@ -26,6 +26,7 @@ extern t_list* lista_interfaces;
 extern pthread_mutex_t mutex_lista_interfaz;
 extern sem_t sem_lista_ready;
 extern sem_t sem_planificacion_pausada;
+extern sem_t sem_grado_multiprogramacion;
 extern int planificacion_pausada;
 
 void operar_io(int* socket_io);

@@ -25,18 +25,24 @@ void operar_interrupt(int* socket_cliente) {
 
 	while(seguir_operando) {
 		t_paquete* paquete = recv_paquete(*socket_cliente);
-		dt_interrumpir_proceso* interrumpir_proceso;
+		dt_interrumpir_proceso* interrumpir_proceso = deserializar_interrumpir_proceso(paquete->buffer);
+
+		existe_interrupcion = 1;
 
 		switch(paquete->codigo_operacion) {
-			case MSG_INTERRUPT:
-				interrumpir_proceso = deserializar_interrumpir_proceso(paquete->buffer);
-				// LÓGICA PARA INTERRUMPIR EL PROCESO
-				free(interrumpir_proceso);
+			case MSG_INTERRUPT_BLOQUEAR:
+				motivo_interrupt_exit = 0;
+				motivo_interrupt_bloqueo = interrumpir_proceso->motivo;
+			break;
+			case MSG_INTERRUPT_EXIT:
+				motivo_interrupt_bloqueo = 0;
+				motivo_interrupt_exit = interrumpir_proceso->motivo;
 			break;
 			default:
 				break;
 		}
 
+		free(interrumpir_proceso);
 		free(paquete->buffer->stream);
 		free(paquete->buffer);
 		free(paquete);
@@ -48,22 +54,20 @@ void operar_interrupt(int* socket_cliente) {
 
 void iniciar_conexion_memoria() {
 	socket_memoria = establecer_conexion_cliente(app_config->ip_memoria, app_config->puerto_memoria);
-	log_info(app_log, "Se establece conexión con Memoria con el socket id %d", socket_memoria);
+
+	request_solicitud_tamanio_pagina(socket_memoria);
+	tamanio_pagina = deserializar_tamanio_pagina(socket_memoria);
 	sem_post(&sem_conexiones);
 }
 
 void iniciar_servidor_dispatch() {
 	socket_escucha_dispatch = crear_socket_escucha(app_config->puerto_escucha_dispatch, 1);
 
-	log_info(app_log, "Se crea conexión para la escucha de Dispatch con el socket id %d", socket_escucha_dispatch);
-
 	int *socket_cliente = malloc(sizeof(int));
 	*socket_cliente = accept(socket_escucha_dispatch, NULL, NULL);
 
 	if(*socket_cliente < 0)
 		abort();
-
-	log_info(app_log, "Se establece conexión con el cliente a dispatch con el socket id %d", *socket_cliente);
 
 	int estado_comunicacion = recv_handshake(*socket_cliente);
 
@@ -76,15 +80,11 @@ void iniciar_servidor_dispatch() {
 void iniciar_servidor_interrupt() {
 	socket_escucha_interrupt = crear_socket_escucha(app_config->puerto_escucha_interrupt, 1);
 
-	log_info(app_log, "Se crea conexión para la escucha de Interrupt con el socket id %d", socket_escucha_interrupt);
-
 	int *socket_cliente = malloc(sizeof(int));
 	*socket_cliente = accept(socket_escucha_interrupt, NULL, NULL);
 
 	if(*socket_cliente < 0)
 		abort();
-
-	log_info(app_log, "Se establece conexión con el cliente a interrupt con el socket id %d", *socket_cliente);
 
 	int estado_comunicacion = recv_handshake(*socket_cliente);
 

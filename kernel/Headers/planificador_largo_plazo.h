@@ -19,6 +19,7 @@ extern sem_t sem_lista_ready;
 extern sem_t sem_grado_multiprogramacion;
 extern t_list* lista_new;
 extern t_list* lista_ready;
+extern pthread_mutex_t mutex_planificador_largo_plazo;
 
 void iniciar_planificador_largo_plazo();
 void finalizar_por_consola(uint32_t pid);
