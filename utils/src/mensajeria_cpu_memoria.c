@@ -403,3 +403,67 @@ uint32_t deserializar_status_mov_out(int socket) {
 	return status;
 }
 
+void request_copy_string(int socket, uint32_t pid, uint32_t direccion_fisica_origen, uint32_t direccion_fisica_destino, uint32_t tamanio) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 4;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica_origen, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica_destino, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_COPY_STRING, socket);
+}
+
+dt_copy_string* deserializar_copy_string(t_buffer* buffer) {
+	dt_copy_string* copy_string = malloc(sizeof(dt_copy_string));
+	void* stream = buffer->stream;
+
+	memcpy(&copy_string->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&copy_string->direccion_fisica_origen, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&copy_string->direccion_fisica_destino, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&copy_string->tamanio, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	return copy_string;
+}
+
+void request_status_copy_string(int socket, uint32_t estado) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &estado, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_COPY_STRING, socket);
+}
+
+uint32_t deserializar_status_copy_string(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t status;
+
+	memcpy(&status, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return status;
+}
+

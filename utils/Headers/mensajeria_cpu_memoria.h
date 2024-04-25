@@ -29,6 +29,13 @@ typedef struct dt_mov {
 	uint32_t direccion_fisica;
 } dt_mov;
 
+typedef struct dt_copy_string {
+	uint32_t pid;
+	uint32_t direccion_fisica_origen;
+	uint32_t direccion_fisica_destino;
+	uint32_t tamanio;
+} dt_copy_string;
+
 void request_proxima_instruccion(int socket, uint32_t pid, uint32_t program_counter);
 dt_proxima_instruccion* deserializar_proxima_instruccion(t_buffer* buffer);
 
@@ -61,5 +68,11 @@ uint32_t deserializar_valor_mov_in(int socket);
 
 void request_status_mov_out(int socket, uint32_t estado);
 uint32_t deserializar_status_mov_out(int socket);
+
+void request_copy_string(int socket, uint32_t pid, uint32_t direccion_fisica_origen, uint32_t direccion_fisica_destino, uint32_t tamanio);
+dt_copy_string* deserializar_copy_string(t_buffer* buffer);
+
+void request_status_copy_string(int socket, uint32_t estado);
+uint32_t deserializar_status_copy_string(int socket);
 
 #endif /* HEADERS_MENSAJERIA_CPU_MEMORIA_H_ */

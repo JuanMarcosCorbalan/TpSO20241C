@@ -246,6 +246,8 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		uint32_t valor_registro_dato;
 		uint32_t direccion_fisica;
 		uint32_t estado_escritura;
+		uint32_t dir_fisica_di;
+		uint32_t dir_fisica_si;
 
 		switch(tipo_instruccion) {
 			case SET:
@@ -286,6 +288,15 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 					contexto_proceso->program_counter = atoi(instruccion_completa->parametro_2);
 				break;
 			case COPY_STRING:
+					dir_fisica_si = obtener_direccion_fisica(contexto_proceso->pid, contexto_proceso->registros_cpu->SI);
+					dir_fisica_di = obtener_direccion_fisica(contexto_proceso->pid, contexto_proceso->registros_cpu->DI);
+					request_copy_string(socket_memoria, contexto_proceso->pid, dir_fisica_si, dir_fisica_di, atoi(instruccion_completa->parametro_1));
+					estado_escritura = deserializar_status_copy_string(socket_memoria);
+					if(estado_escritura == 0) {
+						contexto_proceso->motivo_exit = INVALID_WRITE;
+						request_exit_proceso(socket_cliente, contexto_proceso);
+						seguir_ejecutando = 0;
+					}
 				break;
 			case WAIT:
 				request_wait_recurso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1);

@@ -18,6 +18,7 @@ void operar(int *socket_cliente) {
 		dt_mov* mov;
 		t_instruccion* instruccion;
 		dt_rw_memoria* rw_memoria;
+		dt_copy_string* copy_string;
 		char* valor_lectura;
 
 		switch(paquete->codigo_operacion) {
@@ -77,6 +78,12 @@ void operar(int *socket_cliente) {
 				valor_lectura = "HOLA"; // ACÁ TENGO QUE DEVOLVER LA LECTURA
 				sleep(app_config->retardo_respuesta);
 				request_resultado_lectura_memoria(*socket_cliente, valor_lectura);
+				break;
+			case MSG_COPY_STRING:
+				copy_string = deserializar_copy_string(paquete->buffer);
+				estado_escritura = 1; // LÓGICA DE ESCRITURA. 1 PARA OK. 0 PARA ERROR
+				sleep(app_config->retardo_respuesta);
+				request_status_copy_string(*socket_cliente, estado_escritura);
 				break;
 			default:
 				break;
