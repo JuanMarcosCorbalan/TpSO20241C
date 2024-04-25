@@ -17,6 +17,8 @@ void operar(int *socket_cliente) {
 		dt_marco_memoria* marco_memoria;
 		dt_mov* mov;
 		t_instruccion* instruccion;
+		dt_rw_memoria* rw_memoria;
+		char* valor_lectura;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
@@ -64,6 +66,18 @@ void operar(int *socket_cliente) {
 				sleep(app_config->retardo_respuesta);
 				request_status_mov_out(*socket_cliente, estado_escritura);
 				break;
+			case MSG_IO_STDIN_READ:
+				rw_memoria = deserializar_escritura_memoria(paquete->buffer);
+				estado_escritura = 1; // LOGICA PARA ESCRITURA. 1 PARA OK. 0 ERROR
+				sleep(app_config->retardo_respuesta);
+				request_status_escritura_memoria(*socket_cliente, estado_escritura);
+				break;
+			case MSG_IO_STDOUT_WRITE:
+				rw_memoria = deserializar_lectura_memoria(paquete->buffer);
+				valor_lectura = "HOLA"; // ACÁ TENGO QUE DEVOLVER LA LECTURA
+				sleep(app_config->retardo_respuesta);
+				request_resultado_lectura_memoria(*socket_cliente, valor_lectura);
+				break;
 			default:
 				break;
 		}
@@ -79,6 +93,11 @@ void operar(int *socket_cliente) {
 			case MSG_MOV_IN:
 			case MSG_MOV_OUT:
 				free(mov);
+				break;
+			case MSG_IO_STDIN_READ:
+			case MSG_IO_STDOUT_WRITE:
+				free(rw_memoria->valor_std);
+				free(rw_memoria);
 				break;
 			default:
 				break;

@@ -38,8 +38,11 @@ uint8_t deserializar_estado_validacion_instruccion(t_buffer* buffer);
 void request_io_gen_sleep(int socket, char* instruccion, uint32_t unidad_trabajo, uint32_t pid);
 dt_io_sleep* deserializar_io_gen_sleep(t_buffer* buffer);
 
-void request_desbloquear_proceso(int socket, uint32_t pid);
-uint32_t deserializar_desbloquear_proceso(t_buffer* buffer);
+void request_desbloquear_proceso_io(int socket, uint32_t pid);
+uint32_t deserializar_desbloquear_proceso_io(t_buffer* buffer);
+
+void request_finalizar_proceso_io(int socket, uint32_t pid);
+uint32_t deserializar_finalizar_proceso_io(t_buffer* buffer);
 
 void request_io_stdin_read(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio);
 void request_io_stdout_write(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio);

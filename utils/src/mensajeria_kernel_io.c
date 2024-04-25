@@ -117,7 +117,7 @@ dt_io_sleep* deserializar_io_gen_sleep(t_buffer* buffer) {
 	return instruccion;
 }
 
-void request_desbloquear_proceso(int socket, uint32_t pid) {
+void request_desbloquear_proceso_io(int socket, uint32_t pid) {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 	buffer->size = sizeof(uint32_t);
 	void* stream = malloc(buffer->size);
@@ -131,7 +131,30 @@ void request_desbloquear_proceso(int socket, uint32_t pid) {
 	send_paquete(buffer, MSG_DESBLOQUEAR_IO, socket);
 }
 
-uint32_t deserializar_desbloquear_proceso(t_buffer* buffer) {
+uint32_t deserializar_desbloquear_proceso_io(t_buffer* buffer) {
+	void* stream = buffer->stream;
+
+	uint32_t pid;
+	memcpy(&pid, stream, sizeof(uint32_t));
+
+	return pid;
+}
+
+void request_finalizar_proceso_io(int socket, uint32_t pid) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_FINALIZAR_IO, socket);
+}
+
+uint32_t deserializar_finalizar_proceso_io(t_buffer* buffer) {
 	void* stream = buffer->stream;
 
 	uint32_t pid;

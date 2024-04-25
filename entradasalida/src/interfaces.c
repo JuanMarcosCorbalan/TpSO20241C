@@ -49,6 +49,9 @@ void operar_kernel() {
 		char* nombre_instruccion;
 		dt_io_sleep* io_sleep;
 		dt_io_std* io_std;
+		char* linea_consola;
+		char* sub_linea_consola;
+		uint32_t estado_escritura;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_VALIDAR_INTERFAZ:
@@ -60,24 +63,34 @@ void operar_kernel() {
 			case MSG_IO_GEN_SLEEP:
 				io_sleep = deserializar_io_gen_sleep(paquete->buffer);
 				sleep((app_config->tiempo_unidad_trabajo * io_sleep->unidad_trabajo)/100);
-				request_desbloquear_proceso(socket_kernel, io_sleep->pid);
+				request_desbloquear_proceso_io(socket_kernel, io_sleep->pid);
 				free(io_sleep->instruccion);
 				free(io_sleep);
 				break;
 			case MSG_IO_STDIN_READ:
 				io_std = deserializar_io_std(paquete->buffer);
-				// ACÁ SE EJECUTA LA LÓGICA DEL STDIN_READ
-				// UNA VEZ QUE TERMINE, TENEMOS QUE CONTINUAR CON EL MENSAJE DE DESBLOQUEAR_PROCESO
+				printf("Ingrese una cadena de caracteres para guardar en memoria\n");
+				linea_consola = readline(">");
+				sub_linea_consola = string_substring_until(linea_consola, io_std->tamanio);
+				request_escritura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, sub_linea_consola);
+				estado_escritura = deserializar_status_escritura_memoria(socket_memoria);
 				sleep(app_config->tiempo_unidad_trabajo / 100);
-				request_desbloquear_proceso(socket_kernel, io_std->pid);
+				if(estado_escritura)
+					request_desbloquear_proceso_io(socket_kernel, io_std->pid);
+				else
+					request_finalizar_proceso_io(socket_kernel, io_std->pid);
+				free(sub_linea_consola);
+				free(linea_consola);
 				free(io_std);
 				break;
 			case MSG_IO_STDOUT_WRITE:
 				io_std = deserializar_io_std(paquete->buffer);
-				// ACÁ SE EJECUTA LA LÓGICA DEL STDOUT_READ
-				// UNA VEZ QUE TERMINE, TENEMOS QUE CONTINUAR CON EL MENSAJE DE DESBLOQUEAR_PROCESO
+				request_lectura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, io_std->tamanio);
+				linea_consola = deserializar_resultado_lectura_memoria(socket_memoria);
+				printf("La cadena de caracteres obtenida de memoria es: %s \n", linea_consola);
 				sleep(app_config->tiempo_unidad_trabajo / 100);
-				request_desbloquear_proceso(socket_kernel, io_std->pid);
+				request_desbloquear_proceso_io(socket_kernel, io_std->pid);
+				free(linea_consola);
 				free(io_std);
 				break;
 			default:
