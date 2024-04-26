@@ -50,7 +50,7 @@ void operar(int *socket_cliente) {
 				break;
 			case MSG_MARCO_PAGINA:
 				marco_memoria = deserializar_marco_memoria(paquete->buffer);
-				marco = 1; // LOGICA PARA OBTENER EL MARCO DE LA PAGINA Y LO IGUALO AL MARCO
+				marco = buscar_numero_marco(marco_memoria->pid, marco_memoria->numero_pagina);
 				sleep(app_config->retardo_respuesta);
 				request_numero_marco_memoria(*socket_cliente, marco);
 				free(marco_memoria);
