@@ -113,5 +113,54 @@ uint32_t operar_resize_proceso(uint32_t pid, uint32_t tamanio_nuevo) {
 	return 1;
 }
 
+t_marco* obtener_marco_por_id(uint32_t numero_marco) {
+	bool search(void* elem) {
+		t_marco* aux_marco = (t_marco*) elem;
+		return (aux_marco->numero_marco == numero_marco);
+	}
+	return list_find(tabla_paginas, search);
+}
 
+uint32_t lectura_registro_memoria(uint32_t pid, uint32_t direccion_fisica) {
+	uint32_t numero_marco = floor(direccion_fisica / app_config->tam_pagina);
+	uint32_t valor_lectura;
+
+	if(numero_marco == 0)
+		numero_marco = 1;
+
+	t_marco* marco = obtener_marco_por_id(numero_marco);
+
+	if(marco->pid != pid)
+		return 0;
+
+	memcpy(&valor_lectura, espacio_memoria + direccion_fisica, sizeof(uint32_t));
+	return valor_lectura;
+}
+
+uint32_t escritura_registro_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t valor) {
+	uint32_t numero_marco = floor(direccion_fisica / app_config->tam_pagina);
+
+	if(numero_marco == 0)
+		numero_marco = 1;
+
+	t_marco* marco = obtener_marco_por_id(numero_marco);
+
+	if(marco->pid != pid)
+		return 0;
+
+	memcpy(espacio_memoria + direccion_fisica, &valor, sizeof(uint32_t));
+	return 1;
+}
+
+char* lectura_string_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio) {
+	return "";
+}
+
+uint32_t escritura_string_memoria(uint32_t pid, uint32_t direccion_fisica, char* palabra) {
+	return 1;
+}
+
+uint32_t operar_copy_string(uint32_t pid, uint32_t origen, uint32_t destino, uint32_t tamanio) {
+	return 1;
+}
 

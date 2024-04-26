@@ -57,31 +57,31 @@ void operar(int *socket_cliente) {
 				break;
 			case MSG_MOV_IN:
 				mov = deserializar_mov(paquete->buffer);
-				valor_registro = 128; // ACÁ TENGO QUE DEVOLVER LA LECTURA
+				valor_registro = lectura_registro_memoria(mov->pid, mov->direccion_fisica);
 				sleep(app_config->retardo_respuesta);
 				request_valor_mov_in(*socket_cliente, valor_registro);
 				break;
 			case MSG_MOV_OUT:
 				mov = deserializar_mov(paquete->buffer);
-				estado_escritura = 1; // LOGICA PARA ESCRITURA. 1 PARA OK. 0 ERROR
+				estado_escritura = escritura_registro_memoria(mov->pid, mov->direccion_fisica, mov->valor_registro);
 				sleep(app_config->retardo_respuesta);
 				request_status_mov_out(*socket_cliente, estado_escritura);
 				break;
 			case MSG_IO_STDIN_READ:
 				rw_memoria = deserializar_escritura_memoria(paquete->buffer);
-				estado_escritura = 1; // LOGICA PARA ESCRITURA. 1 PARA OK. 0 ERROR
+				estado_escritura = escritura_string_memoria(rw_memoria->pid, rw_memoria->direccion_fisica, rw_memoria->valor_std);
 				sleep(app_config->retardo_respuesta);
 				request_status_escritura_memoria(*socket_cliente, estado_escritura);
 				break;
 			case MSG_IO_STDOUT_WRITE:
 				rw_memoria = deserializar_lectura_memoria(paquete->buffer);
-				valor_lectura = "HOLA"; // ACÁ TENGO QUE DEVOLVER LA LECTURA
+				valor_lectura = lectura_string_memoria(rw_memoria->pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write);
 				sleep(app_config->retardo_respuesta);
 				request_resultado_lectura_memoria(*socket_cliente, valor_lectura);
 				break;
 			case MSG_COPY_STRING:
 				copy_string = deserializar_copy_string(paquete->buffer);
-				estado_escritura = 1; // LÓGICA DE ESCRITURA. 1 PARA OK. 0 PARA ERROR
+				estado_escritura = operar_copy_string(copy_string->pid, copy_string->direccion_fisica_origen, copy_string->direccion_fisica_destino, copy_string->tamanio);
 				sleep(app_config->retardo_respuesta);
 				request_status_copy_string(*socket_cliente, estado_escritura);
 				break;

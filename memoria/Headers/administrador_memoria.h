@@ -6,6 +6,7 @@
 #include "conexiones.h"
 #include <commons/collections/list.h>
 #include <commons/bitarray.h>
+#include <math.h>
 
 typedef struct t_marco {
 	uint32_t numero_marco;
@@ -28,5 +29,10 @@ void liberar_marcos_proceso(uint32_t pid);
 uint32_t buscar_numero_marco_por_pagina(uint32_t pid, uint32_t numero_pagina);
 uint32_t operar_resize_proceso(uint32_t pid, uint32_t tamanio_nuevo);
 t_marco* agregar_marco_proceso(uint32_t pid);
+uint32_t escritura_string_memoria(uint32_t pid, uint32_t direccion_fisica, char* palabra);
+char* lectura_string_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio);
+uint32_t escritura_registro_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t valor);
+uint32_t lectura_registro_memoria(uint32_t pid, uint32_t direccion_fisica);
+uint32_t operar_copy_string(uint32_t pid, uint32_t origen, uint32_t destino, uint32_t tamanio);
 
 #endif /* HEADERS_ADMINISTRADOR_MEMORIA_H_ */
