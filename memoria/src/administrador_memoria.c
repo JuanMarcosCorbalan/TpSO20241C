@@ -31,15 +31,6 @@ void iniciar_marco_proceso(uint32_t pid) {
 }
 
 void liberar_marcos_proceso(uint32_t pid) {
-	// LIBERO MARCOS BITARRAY
-	void buscar_marco_bitarray(void* elem) {
-		t_marco* aux_marco = (t_marco*) elem;
-		if(aux_marco->pid == pid) {
-			bitarray_clean_bit(bitarray_memoria, aux_marco->id-1);
-		}
-	}
-	list_iterate(tabla_paginas, buscar_marco_bitarray);
-
 	// LIBERO MARCOS
 	bool buscar_por_pid(void* elem) {
 		t_marco* aux_marco = (t_marco*) elem;
@@ -50,6 +41,7 @@ void liberar_marcos_proceso(uint32_t pid) {
 
 	void eliminar_marco(void* elem) {
 		t_marco* aux_marco = (t_marco*) elem;
+		bitarray_clean_bit(bitarray_memoria, aux_marco->id-1);
 		free(aux_marco);
 	}
 
