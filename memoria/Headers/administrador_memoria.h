@@ -25,6 +25,8 @@ extern t_bitarray* bitarray_memoria;
 
 void iniciar_marco_proceso(uint32_t pid);
 void liberar_marcos_proceso(uint32_t pid);
-uint32_t buscar_numero_marco(uint32_t pid, uint32_t numero_pagina);
+uint32_t buscar_numero_marco_por_pagina(uint32_t pid, uint32_t numero_pagina);
+uint32_t operar_resize_proceso(uint32_t pid, uint32_t tamanio_nuevo);
+t_marco* agregar_marco_proceso(uint32_t pid);
 
 #endif /* HEADERS_ADMINISTRADOR_MEMORIA_H_ */

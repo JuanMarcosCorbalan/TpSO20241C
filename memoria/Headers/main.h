@@ -14,7 +14,7 @@ t_memoria_config* app_config;
 t_log* app_log;
 t_list* tabla_paginas;
 void* espacio_memoria;
-void* bits_memoria;
+void* puntero_bitmap;
 t_bitarray* bitarray_memoria;
 
 #endif /* HEADERS_MAIN_H_ */

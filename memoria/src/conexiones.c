@@ -44,13 +44,13 @@ void operar(int *socket_cliente) {
 				break;
 			case MSG_RESIZE_PROCESO:
 				resize_proceso = deserializar_resize_proceso(paquete->buffer);
-				status_resize = 1; //LOGICA PARA HACER RESIZE. 1 PARA OK, 0 PARA ERROR
+				status_resize = operar_resize_proceso(resize_proceso->pid, resize_proceso->size);
 				sleep(app_config->retardo_respuesta);
 				request_status_resize_proceso(*socket_cliente, status_resize);
 				break;
 			case MSG_MARCO_PAGINA:
 				marco_memoria = deserializar_marco_memoria(paquete->buffer);
-				marco = buscar_numero_marco(marco_memoria->pid, marco_memoria->numero_pagina);
+				marco = buscar_numero_marco_por_pagina(marco_memoria->pid, marco_memoria->numero_pagina);
 				sleep(app_config->retardo_respuesta);
 				request_numero_marco_memoria(*socket_cliente, marco);
 				free(marco_memoria);
