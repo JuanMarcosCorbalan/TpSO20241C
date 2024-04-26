@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "administrador_instrucciones.h"
+#include "administrador_memoria.h"
 #include <unistd.h>
 
 extern t_log* app_log;

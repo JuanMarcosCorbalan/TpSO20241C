@@ -28,13 +28,13 @@ void operar(int *socket_cliente) {
 			break;
 			case MSG_INICIAR_PROCESO:
 				iniciar_proceso = deserializar_iniciar_proceso(paquete->buffer);
+				iniciar_marco_proceso(iniciar_proceso->pid);
 				cargar_instrucciones(iniciar_proceso->pid, iniciar_proceso->path);
-				// CREO LAS ESTRUCTURAS CORRESPONDIENTES
 				break;
 			case MSG_FINALIZAR_PROCESO:
 				pid = deserializar_finalizar_proceso(paquete->buffer);
-				// FINALIZO LAS INSTRUCCIONES DEL PROCESO
-				// FINALIZO LAS ESTRUCTURAS CORRESPONDIENTES
+				remover_instrucciones(pid);
+				liberar_marcos_proceso(pid);
 				break;
 			case MSG_PROXIMA_INSTRUCCION:
 				proxima_instruccion = deserializar_proxima_instruccion(paquete->buffer);
