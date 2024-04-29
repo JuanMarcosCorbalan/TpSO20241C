@@ -5,7 +5,7 @@ void iniciar_espacio_memoria() {
 	lista_global_marcos = list_create();
 	lista_marcos_procesos = list_create();
 
-	size_t tamanio_en_byte = (app_config->tam_memoria/app_config->tam_pagina);
+	size_t tamanio_en_byte = (app_config->tam_memoria/app_config->tam_pagina) / 8;
 	puntero_bitmap = malloc(tamanio_en_byte);
 	bitarray_memoria = bitarray_create_with_mode(puntero_bitmap, tamanio_en_byte, LSB_FIRST);
 
