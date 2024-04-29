@@ -12,7 +12,8 @@
 t_list* instrucciones_procesos;
 t_memoria_config* app_config;
 t_log* app_log;
-t_list* tabla_paginas;
+t_list* lista_global_marcos;
+t_list* lista_marcos_procesos;
 void* espacio_memoria;
 void* puntero_bitmap;
 t_bitarray* bitarray_memoria;
