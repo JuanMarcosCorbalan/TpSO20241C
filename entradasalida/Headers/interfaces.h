@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
+#include "log.h"
 #include "../../utils/Headers/mensajeria_kernel_io.h"
 #include "../../utils/Headers/models.h"
 #include "../../utils/Headers/communication.h"
