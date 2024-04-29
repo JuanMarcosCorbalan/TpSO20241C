@@ -62,6 +62,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_GEN_SLEEP:
 				io_sleep = deserializar_io_gen_sleep(paquete->buffer);
+				logear_operacion(io_sleep->pid, paquete->codigo_operacion);
 				sleep((app_config->tiempo_unidad_trabajo * io_sleep->unidad_trabajo)/100);
 				request_desbloquear_proceso_io(socket_kernel, io_sleep->pid);
 				free(io_sleep->instruccion);
@@ -69,6 +70,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_STDIN_READ:
 				io_std = deserializar_io_std(paquete->buffer);
+				logear_operacion(io_std->pid, paquete->codigo_operacion);
 				printf("Ingrese una cadena de caracteres para guardar en memoria\n");
 				linea_consola = readline(">");
 				sub_linea_consola = string_substring_until(linea_consola, io_std->tamanio);
@@ -85,6 +87,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_STDOUT_WRITE:
 				io_std = deserializar_io_std(paquete->buffer);
+				logear_operacion(io_std->pid, paquete->codigo_operacion);
 				request_lectura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, io_std->tamanio);
 				linea_consola = deserializar_resultado_lectura_memoria(socket_memoria);
 				printf("La cadena de caracteres obtenida de memoria es: %s \n", linea_consola);
