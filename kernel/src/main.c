@@ -1,7 +1,7 @@
 #include "../Headers/main.h"
 
 int main(int argc, char *argv[]) {
-	cargar_config("app.config");
+	cargar_config(argv[1]);
 	iniciar_log("app.log");
 
 	iniciar_estructuras();
