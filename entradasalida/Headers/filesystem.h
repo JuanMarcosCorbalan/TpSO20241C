@@ -5,12 +5,16 @@
 #include <commons/collections/queue.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "config.h"
+
 
 //extern t_log* app_log;
-//extern t_io_config* app_config;
+extern t_io_config* app_config;
+extern t_bitarray* bitarray;
 //extern sem_t sem_conexiones;
 //extern int socket_kernel;
 //extern int socket_memoria;
+
 
 /*
 void iniciar_filesystem();
@@ -40,21 +44,22 @@ typedef struct t_metadata {
 } t_metadata;
 
 
-
 void create(char* nombre);
 
 void delete(char* nombre);
 
-void truncate(char* nombre, int nuevo_tamanio)
+void truncar(char* nombre, int nuevo_tamanio);
 
-void buscar_primer_bloque_bitmap_libre(t_bitarray* bitarray);
+void extender_tamanio_archivo(int cant_bloques, int bloque_inicial);
 
-void ocupar_bloques_bitmap(t_bitarray* bitarray, int cant_bloques, int bloque_inicial);
+int buscar_primer_bloque_bitmap_libre();
 
-void desocupar_bloques_bitmap(t_bitarray* bitarray, int cant_bloques, int bloque_inicial);
+void ocupar_bloques_bitmap(int cant_bloques, int bloque_inicial);
+
+void desocupar_bloques_bitmap(int cant_bloques, int bloque_inicial);
 
 void crear_metadata(char* nombre, int primer_bloque);
 
-void leer_metadata(char* nombre);
+t_config* leer_metadata(char* nombre);
 
 #endif /* HEADERS_FILESYSTEM_H_ */
