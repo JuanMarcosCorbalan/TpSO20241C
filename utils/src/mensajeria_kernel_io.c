@@ -213,3 +213,39 @@ dt_io_std* deserializar_io_std(t_buffer* buffer) {
 	return io_std;
 }
 
+void request_iniciar_archivo(int socket, uint32_t pid, char* nombre_archivo) {
+
+}
+
+dt_fs_name* deserializar_iniciar_archivo(t_buffer* buffer) {
+	return (dt_fs_name*) NULL;
+}
+
+void request_borrar_archivo(int socket, uint32_t pid, char* nombre_archivo) {
+
+}
+
+dt_fs_name* deserializar_borrar_archivo(t_buffer* buffer) {
+	return (dt_fs_name*) NULL;
+}
+
+void request_truncate_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t tamanio) {
+
+}
+
+dt_fs_truncate* deserializar_truncate_archivo(t_buffer* buffer) {
+	return (dt_fs_truncate*) NULL;
+}
+
+void request_leer_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo) {
+
+}
+
+void request_escribir_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo) {
+
+}
+
+dt_fs_rw* deserializar_fs_rw(t_buffer* buffer) {
+	return (dt_fs_rw*) NULL;
+}
+

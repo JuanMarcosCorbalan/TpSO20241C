@@ -160,3 +160,35 @@ t_instruccion* obtener_instruccion(uint32_t pid, uint32_t program_counter) {
 
 	return list_get(aux_instruccion_proceso->instrucciones, program_counter - 1);
 }
+
+void remover_instrucciones(uint32_t pid) {
+	bool buscar_por_pid(void* elem) {
+		t_instrucciones_proceso* aux = (t_instrucciones_proceso*) elem;
+		if(aux->pid == pid)
+			return 1;
+		return 0;
+	}
+	t_instrucciones_proceso* aux_instruccion_proceso = list_find(instrucciones_procesos, buscar_por_pid);
+
+	void eliminar_instruccion(void*elem) {
+		t_instruccion* aux_instruccion = (t_instruccion*) elem;
+		uint8_t cantidad_parametros = obtener_cantidad_parametros_instruccion(atoi(aux_instruccion->instruccion));
+
+		if(cantidad_parametros >= 1)
+			free(aux_instruccion->parametro_1);
+		if(cantidad_parametros >= 2)
+			free(aux_instruccion->parametro_2);
+		if(cantidad_parametros >= 3)
+			free(aux_instruccion->parametro_3);
+		if(cantidad_parametros >= 4)
+			free(aux_instruccion->parametro_4);
+		if(cantidad_parametros >= 5)
+			free(aux_instruccion->parametro_5);
+
+		free(aux_instruccion->instruccion);
+		free(aux_instruccion);
+	}
+
+	list_destroy_and_destroy_elements(aux_instruccion_proceso->instrucciones, eliminar_instruccion);
+	free(aux_instruccion_proceso);
+}
