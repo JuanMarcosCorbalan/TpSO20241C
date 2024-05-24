@@ -14,5 +14,6 @@ sem_t sem_conexiones;
 int socket_kernel;
 int socket_memoria;
 t_bitarray* bitarray;
+t_list* lista_metadata;
 
 #endif /* HEADERS_MAIN_H_ */

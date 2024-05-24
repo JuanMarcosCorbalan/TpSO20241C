@@ -11,10 +11,11 @@
 //extern t_log* app_log;
 extern t_io_config* app_config;
 extern t_bitarray* bitarray;
+extern t_list* lista_metadata;
+
 //extern sem_t sem_conexiones;
 //extern int socket_kernel;
 //extern int socket_memoria;
-
 
 /*
 void iniciar_filesystem();
@@ -62,4 +63,12 @@ void crear_metadata(char* nombre, int primer_bloque);
 
 t_config* leer_metadata(char* nombre);
 
+void agregar_a_lista_metadata(char* nombre, int primer_bloque);
+
+t_metadata* buscar_metadata_lista(char* nombre);
+
+void borrar_metadata_lista(char* nombre);
+
+void actualizar_metadata_struct(t_metadata* metadata);
+void actualizar_metadata_lista(t_metadata* metadata);
 #endif /* HEADERS_FILESYSTEM_H_ */

@@ -103,6 +103,7 @@ void operar_kernel() {
 			case MSG_IO_FS_CREATE:
 				fs_name = deserializar_iniciar_archivo(paquete->buffer);
 				// OPERAS CREATE
+				create(fs_name->nombre_archivo);
 				free(fs_name->nombre_archivo);
 				free(fs_name);
 				break;
