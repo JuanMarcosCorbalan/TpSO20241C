@@ -45,10 +45,8 @@ typedef struct dt_fs_rw {
 } dt_fs_rw;
 
 void request_iniciar_archivo(int socket, uint32_t pid, char* nombre_archivo);
-dt_fs_name* deserializar_iniciar_archivo(t_buffer* buffer);
-
 void request_borrar_archivo(int socket, uint32_t pid, char* nombre_archivo);
-dt_fs_name* deserializar_borrar_archivo(t_buffer* buffer);
+dt_fs_name* deserializar_fs_name(t_buffer* buffer);
 
 void request_truncate_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t tamanio);
 dt_fs_truncate* deserializar_truncate_archivo(t_buffer* buffer);

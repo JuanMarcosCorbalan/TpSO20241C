@@ -214,38 +214,164 @@ dt_io_std* deserializar_io_std(t_buffer* buffer) {
 }
 
 void request_iniciar_archivo(int socket, uint32_t pid, char* nombre_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint32_t) * 2 + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
 
-}
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
 
-dt_fs_name* deserializar_iniciar_archivo(t_buffer* buffer) {
-	return (dt_fs_name*) NULL;
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_CREATE, socket);
 }
 
 void request_borrar_archivo(int socket, uint32_t pid, char* nombre_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint32_t) * 2 + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
 
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_DELETE, socket);
 }
 
-dt_fs_name* deserializar_borrar_archivo(t_buffer* buffer) {
-	return (dt_fs_name*) NULL;
+dt_fs_name* deserializar_fs_name(t_buffer* buffer) {
+	dt_fs_name* fs_name = malloc(sizeof(dt_fs_name));
+	void* stream = buffer->stream;
+
+	memcpy(&fs_name->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_name->tamanio_nombre_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	fs_name->nombre_archivo = malloc(fs_name->tamanio_nombre_archivo);
+	memcpy(fs_name->nombre_archivo, stream, fs_name->tamanio_nombre_archivo);
+
+	return fs_name;
 }
 
 void request_truncate_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t tamanio) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint32_t) * 3 + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
 
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_TRUNCATE, socket);
 }
 
 dt_fs_truncate* deserializar_truncate_archivo(t_buffer* buffer) {
-	return (dt_fs_truncate*) NULL;
+	dt_fs_truncate* fs_truncate = malloc(sizeof(dt_fs_truncate));
+	fs_truncate->fs_name = malloc(sizeof(dt_fs_name));
+	void* stream = buffer->stream;
+
+	memcpy(&fs_truncate->fs_name->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_truncate->tamanio, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_truncate->fs_name->tamanio_nombre_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	fs_truncate->fs_name->nombre_archivo = malloc(fs_truncate->fs_name->tamanio_nombre_archivo);
+	memcpy(fs_truncate->fs_name->nombre_archivo, stream, fs_truncate->fs_name->tamanio_nombre_archivo);
+
+	return fs_truncate;
 }
 
 void request_leer_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint32_t) * 5 + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
 
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_direccion, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_puntero_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_READ, socket);
 }
 
 void request_escribir_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint32_t) * 5 + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
 
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_direccion, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_puntero_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_WRITE, socket);
 }
 
 dt_fs_rw* deserializar_fs_rw(t_buffer* buffer) {
-	return (dt_fs_rw*) NULL;
+	dt_fs_rw* fs_rw = malloc(sizeof(dt_fs_rw));
+	fs_rw->fs_name = malloc(sizeof(dt_fs_name));
+	void* stream = buffer->stream;
+
+	memcpy(&fs_rw->fs_name->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_rw->registro_direccion, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_rw->registro_tamanio, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_rw->registro_puntero_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&fs_rw->fs_name->tamanio_nombre_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	fs_rw->fs_name->nombre_archivo = malloc(fs_rw->fs_name->tamanio_nombre_archivo);
+	memcpy(fs_rw->fs_name->nombre_archivo, stream, fs_rw->fs_name->tamanio_nombre_archivo);
+
+	return fs_rw;
 }
 

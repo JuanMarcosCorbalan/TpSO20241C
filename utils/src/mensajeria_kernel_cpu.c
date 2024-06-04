@@ -742,3 +742,526 @@ dt_std* deserializar_std(t_buffer* buffer) {
 	return std;
 }
 
+void request_io_create(int socket, dt_contexto_proceso* contexto, char* nombre_interfaz, char* nombre_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint8_t) * 8 + sizeof(uint32_t) * 13 + tamanio_nombre_interfaz + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &contexto->pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->program_counter, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum_ejecutados, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->estado, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_blocked, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_exit, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->algoritmo, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+
+	memcpy(stream + offset, &contexto->registros_cpu->AX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->BX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->CX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EAX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EBX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->ECX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EDX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->PC, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->SI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, &tamanio_nombre_interfaz, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, nombre_interfaz, tamanio_nombre_interfaz);
+	offset += tamanio_nombre_interfaz;
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_CREATE, socket);
+}
+
+void request_io_delete(int socket, dt_contexto_proceso* contexto, char* nombre_interfaz, char* nombre_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint8_t) * 8 + sizeof(uint32_t) * 13 + tamanio_nombre_interfaz + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &contexto->pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->program_counter, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum_ejecutados, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->estado, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_blocked, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_exit, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->algoritmo, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+
+	memcpy(stream + offset, &contexto->registros_cpu->AX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->BX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->CX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EAX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EBX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->ECX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EDX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->PC, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->SI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, &tamanio_nombre_interfaz, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, nombre_interfaz, tamanio_nombre_interfaz);
+	offset += tamanio_nombre_interfaz;
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_DELETE, socket);
+}
+
+dt_io_file* deserializar_io_file(t_buffer* buffer) {
+	dt_io_file* io_file = malloc(sizeof(dt_io_file));
+	io_file->contexto_proceso = malloc(sizeof(dt_contexto_proceso));
+	io_file->contexto_proceso->registros_cpu = malloc(sizeof(t_registros_cpu));
+	void* stream = buffer->stream;
+
+	memcpy(&io_file->contexto_proceso->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->program_counter, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->quantum, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->quantum_ejecutados, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->estado, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->motivo_blocked, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->motivo_exit, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->algoritmo, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+
+	memcpy(&io_file->contexto_proceso->registros_cpu->AX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->BX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->CX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->DX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->DI, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->EAX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->EBX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->ECX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->EDX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->PC, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->contexto_proceso->registros_cpu->SI, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	memcpy(&io_file->tamanio_nombre_interfaz, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file->tamanio_nombre_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	io_file->nombre_interfaz = malloc(io_file->tamanio_nombre_interfaz);
+	memcpy(io_file->nombre_interfaz, stream, io_file->tamanio_nombre_interfaz);
+	stream += io_file->tamanio_nombre_interfaz;
+
+	io_file->nombre_archivo = malloc(io_file->tamanio_nombre_archivo);
+	memcpy(io_file->nombre_archivo, stream, io_file->tamanio_nombre_archivo);
+	stream += io_file->tamanio_nombre_archivo;
+
+	return io_file;
+}
+
+void request_io_truncate(int socket, dt_contexto_proceso* contexto, char* nombre_interfaz, char* nombre_archivo, uint32_t tamanio_nuevo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint8_t) * 8 + sizeof(uint32_t) * 14 + tamanio_nombre_interfaz + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &contexto->pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->program_counter, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum_ejecutados, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->estado, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_blocked, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_exit, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->algoritmo, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+
+	memcpy(stream + offset, &contexto->registros_cpu->AX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->BX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->CX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EAX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EBX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->ECX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EDX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->PC, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->SI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, &tamanio_nuevo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_interfaz, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, nombre_interfaz, tamanio_nombre_interfaz);
+	offset += tamanio_nombre_interfaz;
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_TRUNCATE, socket);
+}
+
+dt_io_file_truncate* deserializar_io_truncate(t_buffer* buffer) {
+	dt_io_file_truncate* io_file_truncate = malloc(sizeof(dt_io_file_truncate));
+	io_file_truncate->contexto_proceso = malloc(sizeof(dt_contexto_proceso));
+	io_file_truncate->contexto_proceso->registros_cpu = malloc(sizeof(t_registros_cpu));
+	void* stream = buffer->stream;
+
+	memcpy(&io_file_truncate->contexto_proceso->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->program_counter, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->quantum, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->quantum_ejecutados, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->estado, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->motivo_blocked, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->motivo_exit, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->algoritmo, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->AX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->BX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->CX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->DX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->DI, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->EAX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->EBX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->ECX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->EDX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->PC, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->contexto_proceso->registros_cpu->SI, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	memcpy(&io_file_truncate->tamanio_nuevo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->tamanio_nombre_interfaz, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_truncate->tamanio_nombre_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	io_file_truncate->nombre_interfaz = malloc(io_file_truncate->tamanio_nombre_interfaz);
+	memcpy(io_file_truncate->nombre_interfaz, stream, io_file_truncate->tamanio_nombre_interfaz);
+	stream += io_file_truncate->tamanio_nombre_interfaz;
+
+	io_file_truncate->nombre_archivo = malloc(io_file_truncate->tamanio_nombre_archivo);
+	memcpy(io_file_truncate->nombre_archivo, stream, io_file_truncate->tamanio_nombre_archivo);
+	stream += io_file_truncate->tamanio_nombre_archivo;
+
+	return io_file_truncate;
+}
+
+void request_io_read(int socket, dt_contexto_proceso* contexto, char* nombre_interfaz, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint8_t) * 8 + sizeof(uint32_t) * 16 + tamanio_nombre_interfaz + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &contexto->pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->program_counter, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum_ejecutados, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->estado, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_blocked, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_exit, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->algoritmo, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+
+	memcpy(stream + offset, &contexto->registros_cpu->AX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->BX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->CX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EAX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EBX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->ECX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EDX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->PC, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->SI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, &registro_direccion, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_puntero_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_interfaz, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, nombre_interfaz, tamanio_nombre_interfaz);
+	offset += tamanio_nombre_interfaz;
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_READ, socket);
+}
+
+void request_io_write(int socket, dt_contexto_proceso* contexto, char* nombre_interfaz, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_nombre_interfaz = strlen(nombre_interfaz) + 1;
+	uint32_t tamanio_nombre_archivo = strlen(nombre_archivo) + 1;
+	buffer->size = sizeof(uint8_t) * 8 + sizeof(uint32_t) * 16 + tamanio_nombre_interfaz + tamanio_nombre_archivo;
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &contexto->pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->program_counter, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->quantum_ejecutados, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->estado, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_blocked, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->motivo_exit, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->algoritmo, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+
+	memcpy(stream + offset, &contexto->registros_cpu->AX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->BX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->CX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DX, sizeof(uint8_t));
+	offset += sizeof(uint8_t);
+	memcpy(stream + offset, &contexto->registros_cpu->DI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EAX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EBX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->ECX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->EDX, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->PC, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &contexto->registros_cpu->SI, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, &registro_direccion, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_tamanio, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &registro_puntero_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_interfaz, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_nombre_archivo, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	memcpy(stream + offset, nombre_interfaz, tamanio_nombre_interfaz);
+	offset += tamanio_nombre_interfaz;
+	memcpy(stream + offset, nombre_archivo, tamanio_nombre_archivo);
+	offset += tamanio_nombre_archivo;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_WRITE, socket);
+}
+
+dt_io_file_rw* deserializar_io_file_rw(t_buffer* buffer) {
+	dt_io_file_rw* io_file_rw = malloc(sizeof(dt_io_file_rw));
+	io_file_rw->contexto_proceso = malloc(sizeof(dt_contexto_proceso));
+	io_file_rw->contexto_proceso->registros_cpu = malloc(sizeof(t_registros_cpu));
+	void* stream = buffer->stream;
+
+	memcpy(&io_file_rw->contexto_proceso->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->program_counter, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->quantum, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->quantum_ejecutados, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->estado, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->motivo_blocked, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->motivo_exit, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->algoritmo, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->AX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->BX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->CX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->DX, stream, sizeof(uint8_t));
+	stream += sizeof(uint8_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->DI, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->EAX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->EBX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->ECX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->EDX, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->PC, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->contexto_proceso->registros_cpu->SI, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	memcpy(&io_file_rw->registro_direccion, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->registro_tamanio, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->registro_puntero, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->tamanio_nombre_interfaz, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&io_file_rw->tamanio_nombre_archivo, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	io_file_rw->nombre_interfaz = malloc(io_file_rw->tamanio_nombre_interfaz);
+	memcpy(io_file_rw->nombre_interfaz, stream, io_file_rw->tamanio_nombre_interfaz);
+	stream += io_file_rw->tamanio_nombre_interfaz;
+
+	io_file_rw->nombre_archivo = malloc(io_file_rw->tamanio_nombre_archivo);
+	memcpy(io_file_rw->nombre_archivo, stream, io_file_rw->tamanio_nombre_archivo);
+	stream += io_file_rw->tamanio_nombre_archivo;
+
+	return io_file_rw;
+}
+

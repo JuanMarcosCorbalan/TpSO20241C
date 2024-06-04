@@ -307,17 +307,17 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case IO_GEN_SLEEP:
-				contexto_proceso->motivo_blocked = INTERFAZ;
 				if(contexto_proceso->algoritmo == RR)
 					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
 				request_sleep_proceso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				seguir_ejecutando = 0;
 				break;
 			case IO_STDIN_READ:
-				contexto_proceso->motivo_blocked = INTERFAZ;
 				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
 				if(contexto_proceso->algoritmo == RR)
 					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
 				request_stdin_read(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
 				seguir_ejecutando = 0;
 				break;
@@ -330,18 +330,40 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				seguir_ejecutando = 0;
 				break;
 			case IO_FS_CREATE:
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				request_io_create(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, instruccion_completa->parametro_2);
 				seguir_ejecutando = 0;
 				break;
 			case IO_FS_DELETE:
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				request_io_delete(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, instruccion_completa->parametro_2);
 				seguir_ejecutando = 0;
 				break;
 			case IO_FS_TRUNCATE:
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				request_io_truncate(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, instruccion_completa->parametro_2, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
 				seguir_ejecutando = 0;
 				break;
 			case IO_FS_WRITE:
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
+				request_io_write(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, instruccion_completa->parametro_2, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_4), direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_5));
 				seguir_ejecutando = 0;
 				break;
 			case IO_FS_READ:
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
+				request_io_read(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, instruccion_completa->parametro_2, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_4), direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_5));
 				seguir_ejecutando = 0;
 				break;
 			case RESIZE:
