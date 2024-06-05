@@ -24,7 +24,7 @@ void truncate();
 
 void validacion_espacios_contiguos_vacios();
 
-void compactar();
+
 
 void guardar_datos_de_archivo();
 
@@ -51,13 +51,13 @@ void delete(char* nombre);
 
 void truncar(char* nombre, int nuevo_tamanio);
 
-void extender_tamanio_archivo(int cant_bloques, int bloque_inicial);
+void extender_tamanio_archivo(t_metadata* metadata, int bloque_final, int *nuevo_bloque_final, int nuevo_tamanio);
 
 int buscar_primer_bloque_bitmap_libre();
 
-void ocupar_bloques_bitmap(int cant_bloques, int bloque_inicial);
+void ocupar_bloques_bitmap(int bloque_inicial, int bloque_final);
 
-void desocupar_bloques_bitmap(int cant_bloques, int bloque_inicial);
+void desocupar_bloques_bitmap(int bloque_inicial, int bloque_final);
 
 void crear_metadata(char* nombre, int primer_bloque);
 
@@ -65,10 +65,27 @@ t_config* leer_metadata(char* nombre);
 
 void agregar_a_lista_metadata(char* nombre, int primer_bloque);
 
-t_metadata* buscar_metadata_lista(char* nombre);
+t_metadata* buscar_metadata_lista_por_nombre(char* nombre);
+
+t_metadata* buscar_metadata_lista_por_bloque_inicial(int bloque_inicial);
 
 void borrar_metadata_lista(char* nombre);
 
-void actualizar_metadata_struct(t_metadata* metadata);
-void actualizar_metadata_lista(t_metadata* metadata);
+void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nuevo_bloque_final, int nuevo_tamanio);
+
+int buscar_primer_archivo_desde(int bloque);
+
+void mover_archivo_en_bitmap();
+void mover_archivo_en_binario();
+t_list* copiar_y_remover(t_metadata* metadata);
+int pegar_y_reubicar(t_metadata* metadata,t_list* info_binario, int bloque);
+
+int hay_bloques_contiguos_disponibles(int cantidad_bloques);
+
+t_metadata* extraer_de_lista(t_metadata* metadata);
+
+void compactacion(t_metadata* metadata);
+
+t_list* leer_bloques(int bloque_inicial, int bloque_final);
+
 #endif /* HEADERS_FILESYSTEM_H_ */

@@ -57,29 +57,34 @@ void delete(char* nombre){
 }
 
 void truncar(char* nombre, int nuevo_tamanio){
-	t_metadata* metadata = buscar_metadata_lista(nombre);
+	t_metadata* metadata = buscar_metadata_lista_por_nombre(nombre);
 
-	int bloque_final = metadata->tamanio/app_config->block_size;
-	int nuevo_bloque_final = nuevo_tamanio/app_config->block_size;
+	int bloque_inicial = metadata->bloque_inicial;
+	int bloque_final = metadata->bloque_final;
+	int cantidad_bloques_nueva = nuevo_tamanio/app_config->block_size;
+	int nuevo_bloque_final = bloque_inicial + cantidad_bloques_nueva - 1;
+
+	//int cantidad_bloques_necesitada =  cantidad_bloques_nueva -
 
 
 	if(nuevo_tamanio > metadata->tamanio){
-		extender_tamanio_archivo(nuevo_bloque_final - bloque_final, bloque_final);
+		extender_tamanio_archivo(metadata, bloque_final + 1, &nuevo_bloque_final, nuevo_tamanio);
 	} else {
-		desocupar_bloques_bitmap(bloque_final - nuevo_bloque_final, nuevo_bloque_final);
+		desocupar_bloques_bitmap(nuevo_bloque_final + 1, bloque_final);
 	}
-	// actualizar metadata lista
-	actualizar_metadata_lista(metadata);
-	// actualizar .config
+	// actualizar metadata lista, actualizar .config
+	actualizar_metadata(metadata, metadata->bloque_inicial, nuevo_bloque_final, nuevo_tamanio);
+
 
 }
 
-void extender_tamanio_archivo(int cant_bloques, int bloque_inicial){
-//	if(!hay_bloques_contiguos_disponibles()){
-//		compactacion();
-//	}
-//
-//	ocupar_bloques_bitmap(cant_bloques, bloque_inicial);
+void extender_tamanio_archivo(t_metadata* metadata, int bloque_final, int* nuevo_bloque_final, int nuevo_tamanio){
+	if(hay_bloques_contiguos_disponibles(nuevo_bloque_final - bloque_final) < 0){
+		compactacion(metadata);
+		nuevo_bloque_final = metadata->bloque_inicial + nuevo_tamanio/app_config->block_size - 1;
+	}
+
+	ocupar_bloques_bitmap(bloque_final, nuevo_bloque_final);
 }
 
 int buscar_primer_bloque_bitmap_libre(){
@@ -91,15 +96,15 @@ int buscar_primer_bloque_bitmap_libre(){
 	return bloque;
 }
 
-void ocupar_bloques_bitmap(int cant_bloques, int bloque_inicial){
-	for(int i=0; i < cant_bloques; i++){
-		bitarray_set_bit(bitarray, bloque_inicial + i);
+void ocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
+	for(int i=bloque_inicial; i <=bloque_final; i++){
+		bitarray_set_bit(bitarray, i);
 	}
 }
 
-void desocupar_bloques_bitmap(int cant_bloques, int bloque_inicial){
-	for(int i=0; i < cant_bloques; i++){
-		bitarray_clean_bit(bitarray, bloque_inicial + i);
+void desocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
+	for(int i=bloque_inicial; i <= bloque_final; i++){
+		bitarray_clean_bit(bitarray, i);
 	}
 }
 
@@ -109,6 +114,8 @@ void crear_metadata(char* nombre, int primer_bloque){
 
 	t_config *metadata = config_create(nombre);
 
+	char primer_bloque_str[12];  // Suficientemente grande para contener el valor máximo de un uint32_t
+	sprintf(primer_bloque_str, "%u", primer_bloque);
 	config_set_value(metadata, "BLOQUE_INICIAL", primer_bloque);
 	config_set_value(metadata, "TAMANIO_ARCHIVO", "0");
 
@@ -133,7 +140,7 @@ void agregar_a_lista_metadata(char* nombre, int primer_bloque) {
 	list_add(lista_metadata, nuevo_metadata);
 }
 
-t_metadata* buscar_metadata_lista(char* nombre){
+t_metadata* buscar_metadata_lista_por_nombre(char* nombre){
 
 	bool encontrar_por_nombre(void* elem){
 		t_metadata* aux_metadata = (t_metadata*) elem;
@@ -145,7 +152,6 @@ t_metadata* buscar_metadata_lista(char* nombre){
 }
 
 void borrar_metadata_lista(char* nombre){
-
 	bool encontrar_por_nombre(void* elem){
 		t_metadata* aux_metadata = (t_metadata*) elem;
 		return(!strcmp(aux_metadata->nombre,nombre));
@@ -156,21 +162,125 @@ void borrar_metadata_lista(char* nombre){
 		free(metadata->nombre);
 		free(metadata);
 	}
-	list_remove_and_destroy_by_condition(lista_metadata, encontrar_por_nombre,eliminar_metadata);
+	list_remove_and_destroy_by_condition(lista_metadata,encontrar_por_nombre,eliminar_metadata);
 }
 
-void actualizar_metadata_struct(t_metadata* metadata){
+void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nuevo_bloque_final, int nuevo_tamanio){
+	metadata->bloque_inicial = nuevo_bloque_inicial;
+	metadata->bloque_final = nuevo_bloque_final;
+	metadata->tamanio = nuevo_tamanio;
+
+	t_config *metadata_config = config_create(metadata->nombre);
+
+	config_set_value(metadata_config, "TAMANIO", nuevo_tamanio);
+	config_set_value(metadata_config, "PRIMER_BLOQUE", nuevo_bloque_inicial);
+
+	config_save(metadata_config);
+	config_destroy(metadata_config);
+}
+
+
+int buscar_primer_archivo_desde(int bloque){
+	size_t tamanio_bitmap = bitarray_get_max_bit(bitarray);
+	while((bloque < tamanio_bitmap) && !bitarray_test_bit(bitarray, bloque)){
+		bloque++;
+	}
+	if (bloque == tamanio_bitmap){
+		return -1;
+	}
+	return bloque;
+}
+t_metadata* buscar_metadata_lista_por_bloque_inicial(int bloque_inicial){
+
+	bool encontrar_por_bloque_inicial(void* elem){
+		t_metadata* aux_metadata = (t_metadata*) elem;
+		return(aux_metadata->bloque_inicial == bloque_inicial);
+	}
+
+	t_metadata*	metadata = list_find(lista_metadata, encontrar_por_bloque_inicial);
+	return metadata;
+}
+
+t_list* copiar_y_remover(t_metadata* metadata){
+	//retornar bloques
+	//ver con Bruno la lectura y escritura de bloques
+	t_list* bloques_leidos = leer_bloques(metadata->bloque_inicial,metadata->bloque_final);
+	//desocupa bitmap
+	desocupar_bloques_bitmap(metadata->bloque_inicial,metadata->bloque_final);
+
+	return bloques_leidos;
+}
+
+int pegar_y_reubicar(t_metadata* metadata, t_list* info_binario, int primer_bloque_libre){
+	// ocupa bitmap
+	ocupar_bloques_bitmap(primer_bloque_libre,metadata->bloque_final);
+	// pega la info en el binario (ocupa bloques)
+	// devuelve el ultimo bloque usado
+	return escribir_bloques(metadata->bloque_inicial,metadata->bloque_final,info_binario);
+}
+
+int escribir_bloques(int bloque_inicial, int bloque_final, t_list* info_binario){
+	int ultimo_bloque_usado;
+	return ultimo_bloque_usado;
+}
+
+t_list* leer_bloques(int bloque_inicial, int bloque_final){
+	t_list* lista_bloques;
+	return lista_bloques;
+}
+
+int hay_bloques_contiguos_disponibles(int cant_bloques){
+    int bitarray_length = bitarray_get_max_bit(bitarray);
+    int pos = 0;
+    int bloque_libre_inicial = 0;
+    int bloques_libres = 0;
+
+    while(pos < bitarray_length && bloques_libres < cant_bloques){
+    	bloques_libres = 0;
+        bloque_libre_inicial = pos;
+
+        while(!bitarray_test_bit(bitarray, pos)){
+            bloques_libres ++;
+            pos ++;
+        }
+        pos ++;
+    }
+
+    if(bloques_libres >= cant_bloques){
+        return bloque_libre_inicial;
+    } else {
+        return -1;
+    }
+}
+
+
+void compactacion(t_metadata* metadata){
+	void* info_archivo_truncado = copiar_y_remover(metadata);
+	t_metadata* metadata_aux;
+	void* info;
+	int primer_bloque_libre = buscar_primer_bloque_bitmap_libre();
+	int primer_bloque_archivo = buscar_primer_archivo_desde(primer_bloque_libre);
+	int bloque_final;
+	int ultimo_bloque_usado;
+
+	while(primer_bloque_archivo >= 0){
+		// hay que buscar el primer archivo a ubicar
+		// resolver logica de como arrancar
+		metadata_aux = buscar_metadata_lista_por_bloque_inicial(primer_bloque_archivo);
+		info = copiar_y_remover(metadata_aux);
+
+		ultimo_bloque_usado = pegar_y_reubicar(metadata_aux, info, primer_bloque_libre);
+
+		actualizar_metadata(metadata_aux, primer_bloque_libre, ultimo_bloque_usado, metadata_aux->tamanio);
+
+		primer_bloque_libre = ultimo_bloque_usado + 1;
+		// esto es para ir con el siguiente, devuelve -1 si ya no hay archivos siguientes (esta todo compactado)
+		primer_bloque_archivo = buscar_primer_archivo_desde(primer_bloque_libre);
+	}
+	ultimo_bloque_usado = pegar_y_reubicar(metadata, info_archivo_truncado, primer_bloque_libre);
+	actualizar_metadata(metadata, primer_bloque_libre, ultimo_bloque_usado, metadata->tamanio);
 
 }
-void actualizar_metadata_lista(t_metadata* metadata){
 
-}
-//void encontrar_nombre(char* nombre){
-//	bool encontrar_por_nombre(void* elem){
-//		t_metadata* aux_metadata = (t_metadata*) elem;
-//		return(!strcmp(aux_metadata->nombre,nombre));
-//	}
-//
-//}
 
 
