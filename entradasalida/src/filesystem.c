@@ -79,12 +79,13 @@ void truncar(char* nombre, int nuevo_tamanio){
 }
 
 void extender_tamanio_archivo(t_metadata* metadata, int bloque_final, int* nuevo_bloque_final, int nuevo_tamanio){
-	if(hay_bloques_contiguos_disponibles(nuevo_bloque_final - bloque_final) < 0){
+	int nuevo_bloque_final_int = *nuevo_bloque_final;
+	if(hay_bloques_contiguos_disponibles(nuevo_bloque_final_int - bloque_final) < 0){
 		compactacion(metadata);
-		nuevo_bloque_final = metadata->bloque_inicial + nuevo_tamanio/app_config->block_size - 1;
+		nuevo_bloque_final_int = metadata->bloque_inicial + nuevo_tamanio/app_config->block_size - 1;
 	}
 
-	ocupar_bloques_bitmap(bloque_final, nuevo_bloque_final);
+	ocupar_bloques_bitmap(bloque_final, nuevo_bloque_final_int);
 }
 
 int buscar_primer_bloque_bitmap_libre(){
@@ -116,7 +117,7 @@ void crear_metadata(char* nombre, int primer_bloque){
 
 	char primer_bloque_str[12];  // Suficientemente grande para contener el valor máximo de un uint32_t
 	sprintf(primer_bloque_str, "%u", primer_bloque);
-	config_set_value(metadata, "BLOQUE_INICIAL", primer_bloque);
+	config_set_value(metadata, "BLOQUE_INICIAL", primer_bloque_str);
 	config_set_value(metadata, "TAMANIO_ARCHIVO", "0");
 
 	config_save_in_file(metadata, nombre);
@@ -172,6 +173,8 @@ void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nue
 
 	t_config *metadata_config = config_create(metadata->nombre);
 
+
+	// hay que pasar el int a string
 	config_set_value(metadata_config, "TAMANIO", nuevo_tamanio);
 	config_set_value(metadata_config, "PRIMER_BLOQUE", nuevo_bloque_inicial);
 
@@ -219,11 +222,12 @@ int pegar_y_reubicar(t_metadata* metadata, t_list* info_binario, int primer_bloq
 	return escribir_bloques(metadata->bloque_inicial,metadata->bloque_final,info_binario);
 }
 
+//todo
 int escribir_bloques(int bloque_inicial, int bloque_final, t_list* info_binario){
 	int ultimo_bloque_usado;
 	return ultimo_bloque_usado;
 }
-
+//todo
 t_list* leer_bloques(int bloque_inicial, int bloque_final){
 	t_list* lista_bloques;
 	return lista_bloques;
@@ -260,7 +264,7 @@ void compactacion(t_metadata* metadata){
 	void* info;
 	int primer_bloque_libre = buscar_primer_bloque_bitmap_libre();
 	int primer_bloque_archivo = buscar_primer_archivo_desde(primer_bloque_libre);
-	int bloque_final;
+	//int bloque_final;
 	int ultimo_bloque_usado;
 
 	while(primer_bloque_archivo >= 0){
