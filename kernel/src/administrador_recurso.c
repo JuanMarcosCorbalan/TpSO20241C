@@ -1,5 +1,29 @@
 #include "../Headers/administrador_recurso.h"
 
+void liberar_recursos(t_pcb* proceso) {
+	void iterate_recursos(void* elem) {
+		t_recurso_sistema* recurso = elem;
+
+		bool tiene_instancia(void* elem) {
+			t_pcb* aux_proceso = elem;
+			return aux_proceso->pid == proceso->pid;
+		}
+
+		if(list_any_satisfy(recurso->asignacion, tiene_instancia)) {
+			list_remove_element(recurso->asignacion, proceso);
+			recurso->cantidad += 1;
+			desbloquear_proceso_recurso(recurso->nombre);
+		}
+
+		if(list_any_satisfy(recurso->solicitud, tiene_instancia)) {
+			list_remove_element(recurso->solicitud, proceso);
+			recurso->cantidad += 1;
+		}
+	}
+
+	list_iterate(app_config->recursos, iterate_recursos);
+}
+
 t_recurso_sistema* obtener_recurso(char* nombre) {
 	t_list* recursos = app_config->recursos;
 

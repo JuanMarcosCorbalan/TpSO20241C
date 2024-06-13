@@ -2,8 +2,9 @@
 
 void finalizar(t_pcb* proceso) {
 	remover_pcb(proceso, proceso->estado);
-	// ME FALTA LIBERAR RECURSOS
+	liberar_recursos(proceso);
 	request_finalizar_proceso(socket_memoria, proceso->pid);
+	deserializar_proceso_bloqueado(socket_memoria);
 	agregar_pcb(proceso, _EXIT);
 	sem_post(&sem_grado_multiprogramacion);
 }
@@ -116,10 +117,10 @@ void ejecutar_proceso(t_pcb* proceso) {
 					break;
 				}
 
+				bloquear(proceso);
 				request_io_gen_sleep(*aux_interfaz->socket_io, "IO_GEN_SLEEP", sleep_proceso->unidad_trabajo, proceso->pid);
 				list_add(aux_interfaz->bloqueados, proceso);
 				logear_motivo_bloqueo(proceso->pid, sleep_proceso->nombre_interfaz);
-				bloquear(proceso);
 				seguir_operando = 0;
 				break;
 
@@ -155,10 +156,10 @@ void ejecutar_proceso(t_pcb* proceso) {
 					break;
 				}
 
+				bloquear(proceso);
 				request_io_stdin_read(*aux_interfaz->socket_io, std->contexto_proceso->pid, std->direccion_fisica, std->tamanio);
 				list_add(aux_interfaz->bloqueados, proceso);
 				logear_motivo_bloqueo(proceso->pid, std->nombre_interfaz);
-				bloquear(proceso);
 				seguir_operando = 0;
 				break;
 			case MSG_IO_STDOUT_WRITE:
@@ -182,10 +183,10 @@ void ejecutar_proceso(t_pcb* proceso) {
 					break;
 				}
 
+				bloquear(proceso);
 				request_io_stdout_write(*aux_interfaz->socket_io, std->contexto_proceso->pid, std->direccion_fisica, std->tamanio);
 				list_add(aux_interfaz->bloqueados, proceso);
 				logear_motivo_bloqueo(proceso->pid, std->nombre_interfaz);
-				bloquear(proceso);
 				seguir_operando = 0;
 				break;
 			default:

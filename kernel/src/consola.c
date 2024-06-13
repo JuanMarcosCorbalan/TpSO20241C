@@ -140,10 +140,18 @@ void ejecutar_instruccion(uint8_t tipo_operacion, char* parametro) {
 }
 
 void ejecutar_script(char* path) {
-	FILE * archivo_instrucciones = fopen(path, "r");
-	char* buffer_instrucciones = malloc(100);
+	char* cwd = malloc(1024);
+    getcwd(cwd, 1024);
+    string_append_with_format(&cwd, "%s", path);
 
-	while(fgets(buffer_instrucciones, 100, archivo_instrucciones)){
+	FILE * archivo_instrucciones = fopen(cwd, "rb");
+
+    fseek(archivo_instrucciones, 0, SEEK_END);
+    long tamaño = ftell(archivo_instrucciones) + 1;
+    rewind(archivo_instrucciones);
+	char* buffer_instrucciones = malloc(tamaño);
+
+	while(fgets(buffer_instrucciones, tamaño, archivo_instrucciones)){
 		strtok(buffer_instrucciones, "\n");
 		char** parametros = string_split(buffer_instrucciones, " ");
 
@@ -164,6 +172,7 @@ void ejecutar_script(char* path) {
 	fclose(archivo_instrucciones);
 	free(buffer_instrucciones);
 
+	free(cwd);
 	free(path);
 }
 

@@ -87,11 +87,19 @@ t_instruccion* crear_instruccion_vacia() {
 }
 
 void cargar_instrucciones(uint32_t pid, char* path) {
-	t_list* instrucciones = list_create();
-	FILE * archivo_instrucciones = fopen(path, "r");
-	char* buffer_instrucciones = malloc(100);
+	char* cwd = malloc(1024);
+    getcwd(cwd, 1024);
+    string_append_with_format(&cwd, "%s", path);
 
-	while(fgets(buffer_instrucciones, 100, archivo_instrucciones)){
+	t_list* instrucciones = list_create();
+	FILE * archivo_instrucciones = fopen(cwd, "rb");
+
+    fseek(archivo_instrucciones, 0, SEEK_END);
+    long tamaño = ftell(archivo_instrucciones) + 1;
+    rewind(archivo_instrucciones);
+	char* buffer_instrucciones = malloc(tamaño);
+
+	while(fgets(buffer_instrucciones, tamaño, archivo_instrucciones)){
 		strtok(buffer_instrucciones, "\n");
 		char** lista_buffer_instrucciones = string_split(buffer_instrucciones, " ");
 
@@ -140,6 +148,7 @@ void cargar_instrucciones(uint32_t pid, char* path) {
 		list_add(instrucciones, (void*) instruccion);
 	}
 
+	free(cwd);
 	fclose(archivo_instrucciones);
 	free(buffer_instrucciones);
 
@@ -168,11 +177,11 @@ void remover_instrucciones(uint32_t pid) {
 			return 1;
 		return 0;
 	}
-	t_instrucciones_proceso* aux_instruccion_proceso = list_find(instrucciones_procesos, buscar_por_pid);
+	t_instrucciones_proceso* aux_instruccion_proceso = list_remove_by_condition(instrucciones_procesos, buscar_por_pid);
 
 	void eliminar_instruccion(void*elem) {
 		t_instruccion* aux_instruccion = (t_instruccion*) elem;
-		uint8_t cantidad_parametros = obtener_cantidad_parametros_instruccion(atoi(aux_instruccion->instruccion));
+		uint8_t cantidad_parametros = obtener_cantidad_parametros_instruccion(convertir_tipo_instruccion(aux_instruccion->instruccion));
 
 		if(cantidad_parametros >= 1)
 			free(aux_instruccion->parametro_1);

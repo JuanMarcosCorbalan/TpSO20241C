@@ -17,6 +17,7 @@ void planificador_largo_plazo() {
 		pthread_mutex_unlock(&mutex_lista_new);
 
 		request_iniciar_proceso(socket_memoria, proceso);
+		deserializar_proceso_bloqueado(socket_memoria);
 
 		agregar_pcb(proceso, READY);
 
@@ -38,10 +39,10 @@ void finalizar_por_consola(uint32_t pid) {
 		if(proceso->estado != NEW)
 			sem_post(&sem_grado_multiprogramacion);
 
-		// ME FALTA LIBERAR RECURSOS
-		request_finalizar_proceso(socket_memoria, pid);
 		agregar_pcb(proceso, _EXIT);
-
+		liberar_recursos(proceso);
+		request_finalizar_proceso(socket_memoria, pid);
+		deserializar_proceso_bloqueado(socket_memoria);
 	}
 }
 

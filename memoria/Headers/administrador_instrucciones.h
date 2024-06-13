@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <commons/collections/list.h>
 #include "../../utils/Headers/models.h"
 #include "../../utils/Headers/enums.h"

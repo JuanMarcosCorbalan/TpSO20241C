@@ -22,5 +22,6 @@ int existe_recurso(char* nombre);
 int operar_wait(t_pcb* proceso, char* nombre);
 void operar_signal(t_pcb* proceso, char* nombre);
 void desbloquear_proceso_recurso(char* nombre);
+void liberar_recursos(t_pcb* proceso);
 
 #endif /* HEADERS_ADMINISTRADOR_RECURSO_H_ */

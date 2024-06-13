@@ -86,7 +86,7 @@ void liberar_marcos_proceso(uint32_t pid) {
 	void eliminar_marco(void* elem) {
 		t_marco* aux_marco = (t_marco*) elem;
 		list_remove_element(marcos_proceso->marcos, aux_marco);
-		bitarray_clean_bit(bitarray_memoria, aux_marco->numero_marco-1);
+		bitarray_clean_bit(bitarray_memoria, aux_marco->numero_marco);
 		free(aux_marco);
 	}
 
@@ -123,7 +123,7 @@ uint32_t operar_resize_proceso(uint32_t pid, uint32_t tamanio_nuevo) {
 
 		for(int i=0; i<diferencia_paginas; i++) {
 			t_marco* ultimo_marco = obtener_ultimo_marco(pid);
-			bitarray_clean_bit(bitarray_memoria, ultimo_marco->numero_marco-1);
+			bitarray_clean_bit(bitarray_memoria, ultimo_marco->numero_marco);
 			list_remove_element(lista_global_marcos, ultimo_marco);
 			list_remove_element(marcos_proceso->marcos, ultimo_marco);
 			free(ultimo_marco);

@@ -6,6 +6,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include "administrador_pcb.h"
+#include "administrador_recurso.h"
 #include "../../utils/Headers/mensajeria_kernel_memoria.h"
 #include "../../utils/Headers/mensajeria_kernel_cpu.h"
 

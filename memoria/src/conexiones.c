@@ -24,18 +24,19 @@ void operar(int *socket_cliente) {
 
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
-				sleep(app_config->retardo_respuesta);
 				request_tamanio_pagina(*socket_cliente, app_config->tam_pagina);
 			break;
 			case MSG_INICIAR_PROCESO:
 				iniciar_proceso = deserializar_iniciar_proceso(paquete->buffer);
 				iniciar_espacio_memoria_proceso(iniciar_proceso->pid);
 				cargar_instrucciones(iniciar_proceso->pid, iniciar_proceso->path);
+				request_proceso_bloqueado(*socket_cliente, 1);
 				break;
 			case MSG_FINALIZAR_PROCESO:
 				pid = deserializar_finalizar_proceso(paquete->buffer);
 				remover_instrucciones(pid);
 				liberar_marcos_proceso(pid);
+				request_proceso_bloqueado(*socket_cliente, 1);
 				break;
 			case MSG_PROXIMA_INSTRUCCION:
 				proxima_instruccion = deserializar_proxima_instruccion(paquete->buffer);
