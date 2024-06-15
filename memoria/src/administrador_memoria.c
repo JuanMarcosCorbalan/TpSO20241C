@@ -57,7 +57,7 @@ void iniciar_espacio_memoria_proceso(uint32_t pid) {
 	marcos_proceso->marcos = list_create();
 
 	uint32_t numero_marco_disponible = obtener_numero_marco_disponible();
-	t_marco* nuevo_marco = crear_marco(pid, numero_marco_disponible, 1);
+	t_marco* nuevo_marco = crear_marco(pid, numero_marco_disponible, 0);
 
 	list_add(marcos_proceso->marcos, nuevo_marco);
 	list_add(lista_marcos_procesos, marcos_proceso);
@@ -72,7 +72,7 @@ uint32_t buscar_numero_marco_por_pagina(uint32_t pid, uint32_t numero_pagina) {
 
 	t_marco* marco = list_find(lista_global_marcos, search);
 	logear_acceso_tabla_paginas(pid, numero_pagina, marco->numero_marco);
-	return (marco == NULL) ? 0 : marco->numero_marco;
+	return marco->numero_marco;
 }
 
 void liberar_marcos_proceso(uint32_t pid) {

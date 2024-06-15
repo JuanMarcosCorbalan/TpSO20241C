@@ -131,6 +131,18 @@ void ejecutar_proceso(t_pcb* proceso) {
 				if(contexto_proceso->motivo_exit == SUCCESS)
 					logear_fin_proceso(contexto_proceso->pid, "SUCCESS");
 
+				else if(contexto_proceso->motivo_exit == OUT_OF_MEMORY)
+					logear_fin_proceso(contexto_proceso->pid, "OUT_OF_MEMORY");
+
+				else if(contexto_proceso->motivo_exit == INVALID_RESOURCE)
+					logear_fin_proceso(contexto_proceso->pid, "INVALID_RESOURCE");
+
+				else if(contexto_proceso->motivo_exit == INVALID_WRITE)
+					logear_fin_proceso(contexto_proceso->pid, "INVALID_WRITE");
+
+				else
+					logear_fin_proceso(contexto_proceso->pid, "SIN_MOTIVO");
+
 				finalizar(proceso);
 				seguir_operando = 0;
 				break;

@@ -127,7 +127,7 @@ void actualizar_tlb(t_entrada* nueva_entrada) {
 		return;
 	}
 
-	if(strcmp(app_config->algoritmo_tlb, "FIFO")) {
+	if(strcmp(app_config->algoritmo_tlb, "FIFO") == 0) {
 		t_entrada* entrada_fifo = list_remove(lista_tlb, 0);
 		list_add(lista_tlb, nueva_entrada);
 		free(entrada_fifo);
