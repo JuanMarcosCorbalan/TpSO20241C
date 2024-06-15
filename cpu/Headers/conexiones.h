@@ -4,6 +4,7 @@
 #include "../../utils/Headers/connection.h"
 #include "../../utils/Headers/communication.h"
 #include "../../utils/Headers/mensajeria_kernel_cpu.h"
+#include "../../utils/Headers/mensajeria_cpu_memoria.h"
 #include "ciclo_instruccion.h"
 #include <commons/log.h>
 #include <pthread.h>
@@ -19,6 +20,10 @@ extern int socket_memoria;
 extern int socket_escucha_interrupt;
 extern int socket_escucha_dispatch;
 extern sem_t sem_conexiones;
+extern int tamanio_pagina;
+extern int existe_interrupcion;
+extern uint8_t motivo_interrupt_bloqueo;
+extern uint8_t motivo_interrupt_exit;
 
 void iniciar_conexiones();
 

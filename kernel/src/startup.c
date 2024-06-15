@@ -11,6 +11,7 @@ void iniciar_estructuras() {
 	lista_exit = list_create();
 	lista_global = list_create();
 	lista_interfaces = list_create();
+	lista_v_ready = list_create();
 
 	sem_init(&sem_lista_new, 0, 0);
 	sem_init(&sem_lista_ready, 0, 0);
@@ -21,6 +22,7 @@ void iniciar_estructuras() {
 
 	pthread_mutex_init(&mutex_lista_new, NULL);
 	pthread_mutex_init(&mutex_lista_ready, NULL);
+	pthread_mutex_init(&mutex_lista_v_ready, NULL);
 	pthread_mutex_init(&mutex_lista_exec, NULL);
 	pthread_mutex_init(&mutex_lista_blocked, NULL);
 	pthread_mutex_init(&mutex_lista_exit, NULL);
@@ -28,4 +30,5 @@ void iniciar_estructuras() {
 	pthread_mutex_init(&mutex_lista_interfaz, NULL);
 	pthread_mutex_init(&mutex_contador_pid, NULL);
 	pthread_mutex_init(&mutex_ejecucion_proceso, NULL);
+	pthread_mutex_init(&mutex_planificador_largo_plazo, NULL);
 }

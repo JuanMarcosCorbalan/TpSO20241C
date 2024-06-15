@@ -53,3 +53,31 @@ uint32_t deserializar_finalizar_proceso(t_buffer* buffer) {
 
 	return pid;
 }
+
+void request_proceso_bloqueado(int socket, uint32_t estado) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &estado, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_PROCESO_BLOQUEADO_MM, socket);
+}
+
+uint32_t deserializar_proceso_bloqueado(int socket) {
+	t_paquete* paquete = recv_paquete(socket);
+	void* stream = paquete->buffer->stream;
+	uint32_t estado;
+
+	memcpy(&estado, stream, sizeof(uint32_t));
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return estado;
+}

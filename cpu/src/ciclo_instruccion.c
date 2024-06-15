@@ -3,9 +3,9 @@
 uint8_t convertir_tipo_instruccion(char* instruccion) {
 	if(strcmp(instruccion, "SET") == 0)
 		return SET;
-	else if(strcmp(instruccion, "MOVE_IN") == 0)
+	else if(strcmp(instruccion, "MOV_IN") == 0)
 		return MOV_IN;
-	else if(strcmp(instruccion, "MOVE_OUT") == 0)
+	else if(strcmp(instruccion, "MOV_OUT") == 0)
 		return MOV_OUT;
 	else if(strcmp(instruccion, "SUM") == 0)
 		return SUM;
@@ -92,17 +92,135 @@ int obtener_valor_registro(dt_contexto_proceso* contexto_proceso, char* registro
 	return 0;
 }
 
+int existe_entrada_tlb(uint32_t pid, uint32_t numero_pagina) {
+	bool existe_entrada(void* elem) {
+		t_entrada* aux_entrada = (t_entrada*) elem;
+		if(aux_entrada->pid == pid && aux_entrada->pagina == numero_pagina)
+			return 1;
+		return 0;
+	}
+
+	return list_any_satisfy(lista_tlb, existe_entrada);
+}
+
+t_entrada* obtener_entrada_tlb(uint32_t pid, uint32_t numero_pagina) {
+	bool buscar_entrada(void* elem) {
+		t_entrada* aux_entrada = (t_entrada*) elem;
+		if(aux_entrada->pid == pid && aux_entrada->pagina == numero_pagina)
+			return 1;
+		return 0;
+	}
+
+	t_entrada* entrada = list_find(lista_tlb, buscar_entrada);
+
+	if(strcmp(app_config->algoritmo_tlb, "LRU")==0) {
+		free(entrada->ultimo_uso);
+		entrada->ultimo_uso = temporal_get_string_time("%H:%M:%S:%MS");
+	}
+
+	return entrada;
+}
+
+void actualizar_tlb(t_entrada* nueva_entrada) {
+	if(app_config->cantidad_entradas_tlb > lista_tlb->elements_count) {
+		list_add(lista_tlb, nueva_entrada);
+		return;
+	}
+
+	if(strcmp(app_config->algoritmo_tlb, "FIFO") == 0) {
+		t_entrada* entrada_fifo = list_remove(lista_tlb, 0);
+		list_add(lista_tlb, nueva_entrada);
+		free(entrada_fifo);
+	}
+	else {
+	    t_entrada* entrada_lru = list_get(lista_tlb, 0);
+
+	    int index = 0;
+	    int index_change = 0;
+
+	    void obtener_lru(void* elem) {
+	    	index += 1;
+	    	t_entrada* aux_entrada = (t_entrada*) elem;
+	    	if(strcmp(aux_entrada->ultimo_uso, entrada_lru->ultimo_uso) < 0) {
+	    		entrada_lru = aux_entrada;
+	    		index_change = index - 1;
+	    	}
+	    }
+
+	    list_iterate(lista_tlb, obtener_lru);
+	    list_replace(lista_tlb, index_change, nueva_entrada);
+	    free(entrada_lru->ultimo_uso);
+	    free(entrada_lru);
+	}
+}
+
+uint32_t obtener_marco(uint32_t pid, uint32_t numero_pagina) {
+	t_entrada* entrada;
+
+	if(existe_entrada_tlb(pid, numero_pagina)) {
+		logear_tlb_hit(pid, numero_pagina);
+		entrada = obtener_entrada_tlb(pid, numero_pagina);
+	}
+	else {
+		logear_tlb_miss(pid, numero_pagina);
+		entrada = malloc(sizeof(t_entrada));
+		entrada->pid = pid;
+		entrada->pagina = numero_pagina;
+		request_marco_memoria(socket_memoria, pid, numero_pagina);
+		entrada->marco = deserializar_numero_marco_memoria(socket_memoria);
+
+		if(strcmp(app_config->algoritmo_tlb, "LRU") ==0 )
+			entrada->ultimo_uso = temporal_get_string_time("%H:%M:%S:%MS");
+
+		actualizar_tlb(entrada);
+	}
+
+	logear_obtener_marco(pid, numero_pagina, entrada->marco);
+	return entrada->marco;
+}
+
+uint32_t obtener_direccion_fisica(uint32_t pid, uint32_t direccion_logica) {
+	uint32_t numero_pagina = floor(direccion_logica / tamanio_pagina);
+	uint32_t desplazamiento = direccion_logica - numero_pagina * tamanio_pagina;
+	uint32_t numero_marco;
+
+	if(app_config->cantidad_entradas_tlb > 0)
+		numero_marco = obtener_marco(pid, numero_pagina);
+
+	else {
+		request_marco_memoria(socket_memoria, pid, numero_pagina);
+		numero_marco = deserializar_numero_marco_memoria(socket_memoria);
+		logear_obtener_marco(pid, numero_pagina, numero_marco);
+	}
+
+	return tamanio_pagina * numero_marco + desplazamiento;
+}
+
 void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente) {
 	int seguir_ejecutando = 1;
 
 	while(seguir_ejecutando) {
 
 		// VALIDAR QUE NO TENGA INTERRUPCION
-		// VALIDAR QUE NO TENGA INTERRUPCION
-		// VALIDAR QUE NO TENGA INTERRUPCION
-		// VALIDAR QUE NO TENGA INTERRUPCION
+		if(existe_interrupcion) {
+			if(motivo_interrupt_bloqueo != 0) {
+				contexto_proceso->motivo_blocked = motivo_interrupt_bloqueo;
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				request_desalojo_proceso(socket_cliente, contexto_proceso);
+			}
+			else {
+				contexto_proceso->motivo_exit = motivo_interrupt_exit;
+				request_exit_proceso(socket_cliente, contexto_proceso);
+			}
+			existe_interrupcion = 0;
+			seguir_ejecutando = 0;
+			continue;
+		}
 
 		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR) && contexto_proceso->quantum_ejecutados > contexto_proceso->quantum) {
+			contexto_proceso->motivo_blocked = SIN_MOTIVO_BLOCKED;
+			contexto_proceso->motivo_exit = SIN_MOTIVO_EXIT;
 			contexto_proceso->quantum_ejecutados = 1;
 			request_desalojo_proceso(socket_cliente, contexto_proceso);
 			seguir_ejecutando = 0;
@@ -122,21 +240,38 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR))
 			contexto_proceso->quantum_ejecutados += 1;
 
-		// DECODE
-		// DECODE
-		// DECODE
-		// DECODE
-
 		// EXECUTE
-		int valor_registro_destino;
-		int valor_registro_origen;
+		uint32_t valor_registro_destino;
+		uint32_t valor_registro_origen;
+		uint32_t valor_registro_dato;
+		uint32_t direccion_fisica;
+		uint32_t estado_escritura;
+		uint32_t dir_fisica_di;
+		uint32_t dir_fisica_si;
+
 		switch(tipo_instruccion) {
 			case SET:
 				setear_registro(contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				break;
 			case MOV_IN:
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+				request_mov_in(socket_memoria, contexto_proceso->pid ,direccion_fisica);
+				valor_registro_dato = deserializar_valor_mov_in(socket_memoria);
+				setear_registro(contexto_proceso, instruccion_completa->parametro_1, valor_registro_dato);
+				logear_lectura_memoria(contexto_proceso->pid, direccion_fisica, valor_registro_dato);
 				break;
 			case MOV_OUT:
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_1));
+				valor_registro_dato = obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2);
+				request_mov_out(socket_memoria, contexto_proceso->pid, valor_registro_dato, direccion_fisica);
+				estado_escritura = deserializar_status_mov_out(socket_memoria);
+				if(estado_escritura == 0) {
+					contexto_proceso->motivo_exit = INVALID_WRITE;
+					request_exit_proceso(socket_cliente, contexto_proceso);
+					seguir_ejecutando = 0;
+				}
+				else
+					logear_escritura_memoria(contexto_proceso->pid, direccion_fisica, valor_registro_dato);
 				break;
 			case SUM:
 				valor_registro_destino = obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_1);
@@ -152,35 +287,73 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				if(obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_1) != 0)
 					contexto_proceso->program_counter = atoi(instruccion_completa->parametro_2);
 				break;
-			case RESIZE:
-				break;
 			case COPY_STRING:
+					dir_fisica_si = obtener_direccion_fisica(contexto_proceso->pid, contexto_proceso->registros_cpu->SI);
+					dir_fisica_di = obtener_direccion_fisica(contexto_proceso->pid, contexto_proceso->registros_cpu->DI);
+					request_copy_string(socket_memoria, contexto_proceso->pid, dir_fisica_si, dir_fisica_di, atoi(instruccion_completa->parametro_1));
+					estado_escritura = deserializar_status_copy_string(socket_memoria);
+					if(estado_escritura == 0) {
+						contexto_proceso->motivo_exit = INVALID_WRITE;
+						request_exit_proceso(socket_cliente, contexto_proceso);
+						seguir_ejecutando = 0;
+					}
 				break;
 			case WAIT:
+				request_wait_recurso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1);
+				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case SIGNAL:
+				request_signal_recurso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1);
+				deserializar_desbloquear_cpu(socket_cliente);
 				break;
 			case IO_GEN_SLEEP:
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
 				request_sleep_proceso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				seguir_ejecutando = 0;
 				break;
 			case IO_STDIN_READ:
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				request_stdin_read(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
+				seguir_ejecutando = 0;
 				break;
 			case IO_STDOUT_WRITE:
+				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+				if(contexto_proceso->algoritmo == RR)
+					contexto_proceso->quantum_ejecutados = 1;
+				contexto_proceso->motivo_blocked = INTERFAZ;
+				request_stdout_write(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_CREATE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_DELETE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_TRUNCATE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_WRITE:
+				seguir_ejecutando = 0;
 				break;
 			case IO_FS_READ:
+				seguir_ejecutando = 0;
+				break;
+			case RESIZE:
+				request_resize_proceso(socket_memoria, contexto_proceso->pid, atoi(instruccion_completa->parametro_1));
+				if(deserializar_status_resize_proceso(socket_memoria) == 0) {
+					contexto_proceso->motivo_exit = OUT_OF_MEMORY;
+					request_exit_proceso(socket_cliente, contexto_proceso);
+					seguir_ejecutando = 0;
+				}
 				break;
 			case EXIT:
 				contexto_proceso->motivo_exit = SUCCESS;
-				logear_instruccion_ejecutada(contexto_proceso->pid, instruccion_completa->instruccion, "");
 				request_exit_proceso(socket_cliente, contexto_proceso);
 				seguir_ejecutando = 0;
 				break;
@@ -189,6 +362,9 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		}
 
 		switch(tipo_instruccion) {
+			case EXIT:
+				logear_instruccion_ejecutada(contexto_proceso->pid, instruccion_completa->instruccion, "");
+			break;
 			case RESIZE:
 			case COPY_STRING:
 			case WAIT:

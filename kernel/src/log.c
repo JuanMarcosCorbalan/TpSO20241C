@@ -30,7 +30,7 @@ void logear_fin_quantum(int pid) {
 char* listar_procesos_ready() {
 	char* procesos = string_new();
 
-	string_append(&procesos, "Cola ready ");
+	string_append(&procesos, "COLA READY ");
 	string_append(&procesos, app_config->algoritmo_planificacion);
 	string_append(&procesos, ":[");
 
@@ -49,6 +49,32 @@ char* listar_procesos_ready() {
 	return procesos;
 }
 
+char* listar_procesos_v_ready() {
+	char* procesos = string_new();
+
+	string_append(&procesos, "COLA PRIORIDAD READY ");
+	string_append(&procesos, app_config->algoritmo_planificacion);
+	string_append(&procesos, ":[");
+
+	int contador_iteraciones = 0;
+
+	void append_pid(void* elem) {
+		contador_iteraciones++;
+		t_pcb* proceso = (t_pcb*) elem;
+		string_append_with_format(&procesos, "%s",string_itoa(proceso->pid));
+		if(contador_iteraciones < lista_v_ready->elements_count) {
+			string_append_with_format(&procesos, ",");
+		}
+	}
+	list_iterate(lista_v_ready, append_pid);
+	string_append(&procesos, "]");
+	return procesos;
+}
+void logear_ingreso_v_ready() {
+	char* lista_pids_v = listar_procesos_v_ready();
+	log_info(app_log, "%s", lista_pids_v);
+	free(lista_pids_v);
+}
 void logear_ingreso_ready() {
 	char* lista_pids = listar_procesos_ready();
 	log_info(app_log, "%s", lista_pids);

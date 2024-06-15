@@ -5,6 +5,7 @@
 #include "../../utils/Headers/communication.h"
 #include "../../utils/Headers/mensajeria_kernel_memoria.h"
 #include "../../utils/Headers/mensajeria_cpu_memoria.h"
+#include "../../utils/Headers/mensajeria_io_memoria.h"
 #include "../../utils/Headers/models.h"
 #include "../../utils/Headers/enums.h"
 #include <commons/log.h>
@@ -14,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "administrador_instrucciones.h"
+#include "administrador_memoria.h"
 #include <unistd.h>
 
 extern t_log* app_log;

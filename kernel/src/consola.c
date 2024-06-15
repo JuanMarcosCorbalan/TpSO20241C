@@ -64,17 +64,16 @@ void iniciar_proceso(char* path) {
 	t_pcb* nuevo_pcb = crear_pcb(path);
 	pthread_mutex_unlock(&mutex_contador_pid);
 
-
 	pthread_mutex_lock(&mutex_lista_global);
 	list_add(lista_global, (void*) nuevo_pcb);
 	pthread_mutex_unlock(&mutex_lista_global);
+
+	logear_creacion_proceso(nuevo_pcb->pid);
 
 	pthread_mutex_lock(&mutex_lista_new);
 	list_add(lista_new, (void*) nuevo_pcb);
 	pthread_mutex_unlock(&mutex_lista_new);
 	sem_post(&sem_lista_new);
-
-	logear_creacion_proceso(nuevo_pcb->pid);
 
 	free(path);
 }
@@ -141,10 +140,18 @@ void ejecutar_instruccion(uint8_t tipo_operacion, char* parametro) {
 }
 
 void ejecutar_script(char* path) {
-	FILE * archivo_instrucciones = fopen(path, "r");
-	char* buffer_instrucciones = malloc(100);
+	char* cwd = malloc(1024);
+    getcwd(cwd, 1024);
+    string_append_with_format(&cwd, "%s", path);
 
-	while(fgets(buffer_instrucciones, 100, archivo_instrucciones)){
+	FILE * archivo_instrucciones = fopen(cwd, "rb");
+
+    fseek(archivo_instrucciones, 0, SEEK_END);
+    long tamaño = ftell(archivo_instrucciones) + 1;
+    rewind(archivo_instrucciones);
+	char* buffer_instrucciones = malloc(tamaño);
+
+	while(fgets(buffer_instrucciones, tamaño, archivo_instrucciones)){
 		strtok(buffer_instrucciones, "\n");
 		char** parametros = string_split(buffer_instrucciones, " ");
 
@@ -165,6 +172,7 @@ void ejecutar_script(char* path) {
 	fclose(archivo_instrucciones);
 	free(buffer_instrucciones);
 
+	free(cwd);
 	free(path);
 }
 
