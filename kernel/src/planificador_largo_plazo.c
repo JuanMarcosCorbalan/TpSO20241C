@@ -31,7 +31,7 @@ void finalizar_por_consola(uint32_t pid) {
 	t_pcb* proceso = obtener_pcb_por_id(pid);
 
 	if(proceso->estado == EXEC) {
-		request_interrumpir_proceso_exit(socket_cpu_interrupt, pid, SUCCESS);
+		request_interrumpir_proceso_exit(socket_cpu_interrupt, pid, SUCCESS_CONSOLA);
 	}
 	else {
 		remover_pcb(proceso, proceso->estado);

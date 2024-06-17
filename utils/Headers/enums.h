@@ -73,14 +73,15 @@ typedef enum motivo_exit {
 	SIN_MOTIVO_EXIT,
 	SUCCESS,
 	INVALID_RESOURCE,
-	INVALID_WRITE
+	INVALID_WRITE,
+	OUT_OF_MEMORY,
+	SUCCESS_CONSOLA
 } motivo_exit;
 
 typedef enum motivo_blocked {
 	SIN_MOTIVO_BLOCKED,
 	INTERFAZ,
-	RECURSO,
-	OUT_OF_MEMORY
+	RECURSO
 } motivo_blocked;
 
 typedef enum estado_proceso {
