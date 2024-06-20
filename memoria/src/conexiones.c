@@ -41,19 +41,19 @@ void operar(int *socket_cliente) {
 			case MSG_PROXIMA_INSTRUCCION:
 				proxima_instruccion = deserializar_proxima_instruccion(paquete->buffer);
 				instruccion = obtener_instruccion(proxima_instruccion->pid, proxima_instruccion->program_counter);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_instruccion(*socket_cliente, instruccion);
 				break;
 			case MSG_RESIZE_PROCESO:
 				resize_proceso = deserializar_resize_proceso(paquete->buffer);
 				status_resize = operar_resize_proceso(resize_proceso->pid, resize_proceso->size);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_status_resize_proceso(*socket_cliente, status_resize);
 				break;
 			case MSG_MARCO_PAGINA:
 				marco_memoria = deserializar_marco_memoria(paquete->buffer);
 				marco = buscar_numero_marco_por_pagina(marco_memoria->pid, marco_memoria->numero_pagina);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_numero_marco_memoria(*socket_cliente, marco);
 				free(marco_memoria);
 				break;
@@ -61,7 +61,7 @@ void operar(int *socket_cliente) {
 				mov = deserializar_mov(paquete->buffer);
 				stream_rw = lectura_memoria(mov->pid, mov->direccion_fisica, sizeof(uint32_t));
 				memcpy(&valor_registro, stream_rw, sizeof(uint32_t));
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_valor_mov_in(*socket_cliente, valor_registro);
 				break;
 			case MSG_MOV_OUT:
@@ -69,7 +69,7 @@ void operar(int *socket_cliente) {
 				stream_rw = malloc(sizeof(uint32_t));
 				memcpy(stream_rw, &mov->valor_registro, sizeof(uint32_t));
 				estado_escritura = escritura_memoria(mov->pid, mov->direccion_fisica, sizeof(uint32_t), stream_rw);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_status_mov_out(*socket_cliente, estado_escritura);
 				free(stream_rw);
 				break;
@@ -78,7 +78,7 @@ void operar(int *socket_cliente) {
 				stream_rw = malloc(rw_memoria->tamanio_read_write);
 				memcpy(stream_rw, rw_memoria->valor_std, rw_memoria->tamanio_read_write);
 				estado_escritura = escritura_memoria(pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write, stream_rw);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_status_escritura_memoria(*socket_cliente, estado_escritura);
 				free(stream_rw);
 				break;
@@ -87,14 +87,14 @@ void operar(int *socket_cliente) {
 				stream_rw = lectura_memoria(pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write);
 				valor_lectura = malloc(rw_memoria->tamanio_read_write);
 				memcpy(valor_lectura, stream_rw, rw_memoria->tamanio_read_write);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_resultado_lectura_memoria(*socket_cliente, valor_lectura);
 				free(valor_lectura);
 				break;
 			case MSG_COPY_STRING:
 				copy_string = deserializar_copy_string(paquete->buffer);
 				estado_escritura = operar_copy_string(copy_string->pid, copy_string->direccion_fisica_origen, copy_string->direccion_fisica_destino, copy_string->tamanio);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_status_copy_string(*socket_cliente, estado_escritura);
 				break;
 			default:

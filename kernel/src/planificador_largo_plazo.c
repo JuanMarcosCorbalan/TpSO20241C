@@ -36,7 +36,7 @@ void finalizar_por_consola(uint32_t pid) {
 	else {
 		remover_pcb(proceso, proceso->estado);
 
-		if(proceso->estado != NEW)
+		if(proceso->estado != NEW || proceso->estado != EXEC)
 			sem_post(&sem_grado_multiprogramacion);
 
 		agregar_pcb(proceso, _EXIT);

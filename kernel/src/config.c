@@ -12,7 +12,7 @@ void cargar_config(char* path) {
 	app_config->puerto_cpu_interrupt = config_get_int_value(archivo_config, "PUERTO_CPU_INTERRUPT");
 	app_config->puerto_escucha = config_get_int_value(archivo_config, "PUERTO_ESCUCHA");
 	app_config->puerto_memoria = config_get_int_value(archivo_config, "PUERTO_MEMORIA");
-	app_config->quantum = config_get_int_value(archivo_config, "QUANTUM") / 1000;
+	app_config->quantum = config_get_int_value(archivo_config, "QUANTUM");
 	app_config->recursos = list_create();
 
 	char* recursos = config_get_string_value(archivo_config, "RECURSOS");

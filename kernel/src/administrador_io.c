@@ -63,11 +63,11 @@ void desbloquear_por_io(t_interfaz_io* interfaz, uint32_t pid) {
 	t_pcb* proceso_desbloqueado = list_remove_by_condition(interfaz->bloqueados, remover_por_pid);
 	remover_pcb(proceso_desbloqueado, proceso_desbloqueado->estado);
 
-	if(strcmp(app_config->algoritmo_planificacion, "VRR") && proceso_desbloqueado->quantum_ejecutados <= app_config->quantum && proceso_desbloqueado->quantum_ejecutados > 1) {
+	if(strcmp(app_config->algoritmo_planificacion, "VRR") == 0 && proceso_desbloqueado->quantum_ejecutados <= app_config->quantum && proceso_desbloqueado->quantum_ejecutados > 0) {
 		agregar_pcb(proceso_desbloqueado, V_READY);
 	}
 	else {
-		agregar_pcb(proceso_desbloqueado, READY);
+	agregar_pcb(proceso_desbloqueado, READY);
 	}
 
 	sem_post(&sem_lista_ready);

@@ -6,7 +6,7 @@ void cargar_config(char* path) {
 
 	app_config->path_instrucciones = config_get_string_value(archivo_config, "PATH_INSTRUCCIONES");
 	app_config->puerto_escucha = config_get_int_value(archivo_config, "PUERTO_ESCUCHA");
-	app_config->retardo_respuesta = config_get_int_value(archivo_config, "RETARDO_RESPUESTA") / 100;
+	app_config->retardo_respuesta = config_get_int_value(archivo_config, "RETARDO_RESPUESTA");
 	app_config->tam_memoria = config_get_int_value(archivo_config, "TAM_MEMORIA");
 	app_config->tam_pagina = config_get_int_value(archivo_config, "TAM_PAGINA");
 }

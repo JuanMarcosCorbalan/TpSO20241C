@@ -201,12 +201,14 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 
 	while(seguir_ejecutando) {
 
+		rafaga_quantum = temporal_create();
+
 		// VALIDAR QUE NO TENGA INTERRUPCION
 		if(existe_interrupcion) {
 			if(motivo_interrupt_bloqueo != 0) {
 				contexto_proceso->motivo_blocked = motivo_interrupt_bloqueo;
 				if(contexto_proceso->algoritmo == RR)
-					contexto_proceso->quantum_ejecutados = 1;
+					contexto_proceso->quantum_ejecutados = 0;
 				request_desalojo_proceso(socket_cliente, contexto_proceso);
 			}
 			else {
@@ -215,15 +217,9 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 			}
 			existe_interrupcion = 0;
 			seguir_ejecutando = 0;
-			continue;
-		}
 
-		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR) && contexto_proceso->quantum_ejecutados > contexto_proceso->quantum) {
-			contexto_proceso->motivo_blocked = SIN_MOTIVO_BLOCKED;
-			contexto_proceso->motivo_exit = SIN_MOTIVO_EXIT;
-			contexto_proceso->quantum_ejecutados = 1;
-			request_desalojo_proceso(socket_cliente, contexto_proceso);
-			seguir_ejecutando = 0;
+			temporal_destroy(rafaga_quantum);
+
 			continue;
 		}
 
@@ -235,10 +231,23 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		uint8_t tipo_instruccion = convertir_tipo_instruccion(instruccion_completa->instruccion);
 		char* parametros = string_new();
 
-		contexto_proceso->program_counter += 1;
+		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR)) {
+			printf("\nPID: %d TIEMPO INIT: %d \n", contexto_proceso->pid, contexto_proceso->quantum_ejecutados);
 
-		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR))
-			contexto_proceso->quantum_ejecutados += 1;
+			if(contexto_proceso->quantum_ejecutados > contexto_proceso->quantum) {
+				contexto_proceso->motivo_blocked = SIN_MOTIVO_BLOCKED;
+				contexto_proceso->motivo_exit = SIN_MOTIVO_EXIT;
+				contexto_proceso->quantum_ejecutados = 0;
+
+				request_desalojo_proceso(socket_cliente, contexto_proceso);
+				seguir_ejecutando = 0;
+
+				temporal_destroy(rafaga_quantum);
+				continue;
+			}
+		}
+
+		contexto_proceso->program_counter += 1;
 
 		// EXECUTE
 		uint32_t valor_registro_destino;
@@ -308,23 +317,35 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				break;
 			case IO_GEN_SLEEP:
 				contexto_proceso->motivo_blocked = INTERFAZ;
+
 				if(contexto_proceso->algoritmo == RR)
-					contexto_proceso->quantum_ejecutados = 1;
+					contexto_proceso->quantum_ejecutados = 0;
+				else
+					contexto_proceso->quantum_ejecutados += (int) temporal_gettime(rafaga_quantum);
+
 				request_sleep_proceso(socket_cliente, contexto_proceso, instruccion_completa->parametro_1, atoi(instruccion_completa->parametro_2));
 				seguir_ejecutando = 0;
 				break;
 			case IO_STDIN_READ:
 				contexto_proceso->motivo_blocked = INTERFAZ;
 				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+
 				if(contexto_proceso->algoritmo == RR)
-					contexto_proceso->quantum_ejecutados = 1;
+					contexto_proceso->quantum_ejecutados = 0;
+				else
+					contexto_proceso->quantum_ejecutados += (int) temporal_gettime(rafaga_quantum);
+
 				request_stdin_read(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
 				seguir_ejecutando = 0;
 				break;
 			case IO_STDOUT_WRITE:
 				direccion_fisica = obtener_direccion_fisica(contexto_proceso->pid, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_2));
+
 				if(contexto_proceso->algoritmo == RR)
-					contexto_proceso->quantum_ejecutados = 1;
+					contexto_proceso->quantum_ejecutados = 0;
+				else
+					contexto_proceso->quantum_ejecutados += (int) temporal_gettime(rafaga_quantum);
+
 				contexto_proceso->motivo_blocked = INTERFAZ;
 				request_stdout_write(socket_cliente, instruccion_completa->parametro_1, contexto_proceso, direccion_fisica, obtener_valor_registro(contexto_proceso, instruccion_completa->parametro_3));
 				seguir_ejecutando = 0;
@@ -360,6 +381,13 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 			default:
 				break;
 		}
+
+		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR)) {
+			contexto_proceso->quantum_ejecutados += (int) temporal_gettime(rafaga_quantum);
+			printf("\nPID: %d TIEMPO INIT: %d \n", contexto_proceso->pid, contexto_proceso->quantum_ejecutados);
+		}
+
+		temporal_destroy(rafaga_quantum);
 
 		switch(tipo_instruccion) {
 			case EXIT:
@@ -425,4 +453,24 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 		free(paquete->buffer);
 		free(paquete);
 	}
+}
+
+void operar_dispatch(int* socket_cliente) {
+	int seguir_operando = 1;
+
+	while(seguir_operando) {
+		t_paquete* paquete_inicial = recv_paquete(*socket_cliente);
+		dt_contexto_proceso* contexto_proceso = deserializar_contexto_proceso(paquete_inicial->buffer);
+
+		ejecutar_proceso(contexto_proceso, *socket_cliente);
+
+		free(contexto_proceso->registros_cpu);
+		free(contexto_proceso);
+		free(paquete_inicial->buffer->stream);
+		free(paquete_inicial->buffer);
+		free(paquete_inicial);
+	}
+
+	close(*socket_cliente);
+	free(socket_cliente);
 }
