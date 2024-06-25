@@ -77,8 +77,8 @@ int buscar_primer_archivo_desde(int bloque);
 
 void mover_archivo_en_bitmap();
 void mover_archivo_en_binario();
-t_list* copiar_y_remover(t_metadata* metadata);
-int pegar_y_reubicar(t_metadata* metadata,t_list* info_binario, int bloque);
+void* copiar_y_remover(t_metadata* metadata);
+int pegar_y_reubicar(t_metadata* metadata,void* info_binario, int bloque);
 
 int hay_bloques_contiguos_disponibles(int cantidad_bloques);
 
@@ -86,6 +86,10 @@ t_metadata* extraer_de_lista(t_metadata* metadata);
 
 void compactacion(t_metadata* metadata);
 
-t_list* leer_bloques(int bloque_inicial, int bloque_final);
+void* leer_bloques(int tamanio_a_leer, int bloque_inicial);
+int escribir_bloques(int tamanio_a_escribir, int bloque_inicial, int bloque_final, void* info_binario);
+
+void write_fs(char* nombre, int tamanio, int puntero, void* info_a_escribir);
+void* read_fs(char* nombre, int tamanio, int puntero);
 
 #endif /* HEADERS_FILESYSTEM_H_ */

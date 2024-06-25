@@ -175,8 +175,12 @@ void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nue
 
 
 	// hay que pasar el int a string
-	config_set_value(metadata_config, "TAMANIO", nuevo_tamanio);
-	config_set_value(metadata_config, "PRIMER_BLOQUE", nuevo_bloque_inicial);
+	char primer_bloque_str[12];  // Suficientemente grande para contener el valor máximo de un uint32_t
+	sprintf(primer_bloque_str, "%u", nuevo_bloque_inicial);
+	char nuevo_tamanio_str[12];
+	sprintf(nuevo_tamanio_str, "%u", nuevo_tamanio);
+	config_set_value(metadata_config, "TAMANIO", nuevo_tamanio_str);
+	config_set_value(metadata_config, "PRIMER_BLOQUE", primer_bloque_str);
 
 	config_save(metadata_config);
 	config_destroy(metadata_config);
@@ -204,33 +208,42 @@ t_metadata* buscar_metadata_lista_por_bloque_inicial(int bloque_inicial){
 	return metadata;
 }
 
-t_list* copiar_y_remover(t_metadata* metadata){
+void* copiar_y_remover(t_metadata* metadata){
 	//retornar bloques
 	//ver con Bruno la lectura y escritura de bloques
-	t_list* bloques_leidos = leer_bloques(metadata->bloque_inicial,metadata->bloque_final);
+	void* buffer_leido = leer_bloques(metadata->tamanio, metadata->bloque_inicial);
 	//desocupa bitmap
 	desocupar_bloques_bitmap(metadata->bloque_inicial,metadata->bloque_final);
 
-	return bloques_leidos;
+	return buffer_leido;
 }
 
-int pegar_y_reubicar(t_metadata* metadata, t_list* info_binario, int primer_bloque_libre){
+int pegar_y_reubicar(t_metadata* metadata, void* info_binario, int primer_bloque_libre){
 	// ocupa bitmap
 	ocupar_bloques_bitmap(primer_bloque_libre,metadata->bloque_final);
 	// pega la info en el binario (ocupa bloques)
 	// devuelve el ultimo bloque usado
-	return escribir_bloques(metadata->bloque_inicial,metadata->bloque_final,info_binario);
+	// ACA CAMBIE METADATA->BLOQUE_INICIAL POR PRIMER_BLOQUE_LIBRE PORQ NO ESTBAA ACTUALIZADO
+	return escribir_bloques(metadata->tamanio, primer_bloque_libre,metadata->bloque_final,info_binario);
 }
 
 //todo
-int escribir_bloques(int bloque_inicial, int bloque_final, t_list* info_binario){
-	int ultimo_bloque_usado;
+int escribir_bloques(int tamanio, int bloque_inicial, int bloque_final, void* info_binario){
+	// revisar este calculo
+	int ultimo_bloque_usado = (tamanio/app_config->block_size) + bloque_inicial;
+	FILE* archivo_bloques = fopen("bloques.dat", "w");
+	fseek(archivo_bloques, bloque_inicial * app_config->block_size, SEEK_SET);
+	fwrite(info_binario, tamanio, 1, archivo_bloques);
 	return ultimo_bloque_usado;
 }
 //todo
-t_list* leer_bloques(int bloque_inicial, int bloque_final){
-	t_list* lista_bloques;
-	return lista_bloques;
+void* leer_bloques(int tamanio, int bloque_inicial){
+	void* buffer_leido = NULL;
+	FILE* archivo_bloques = fopen("bloques.dat", "r");
+	fseek(archivo_bloques, bloque_inicial * app_config->block_size, SEEK_SET);
+	fread(buffer_leido, tamanio, 1, archivo_bloques);
+	fclose(archivo_bloques);
+	return buffer_leido;
 }
 
 int hay_bloques_contiguos_disponibles(int cant_bloques){
@@ -259,7 +272,7 @@ int hay_bloques_contiguos_disponibles(int cant_bloques){
 
 
 void compactacion(t_metadata* metadata){
-	void* info_archivo_truncado = copiar_y_remover(metadata);
+	void* buffer_archivo_truncado = copiar_y_remover(metadata);
 	t_metadata* metadata_aux;
 	void* info;
 	int primer_bloque_libre = buscar_primer_bloque_bitmap_libre();
@@ -281,10 +294,39 @@ void compactacion(t_metadata* metadata){
 		// esto es para ir con el siguiente, devuelve -1 si ya no hay archivos siguientes (esta todo compactado)
 		primer_bloque_archivo = buscar_primer_archivo_desde(primer_bloque_libre);
 	}
-	ultimo_bloque_usado = pegar_y_reubicar(metadata, info_archivo_truncado, primer_bloque_libre);
+	ultimo_bloque_usado = pegar_y_reubicar(metadata, buffer_archivo_truncado, primer_bloque_libre);
 	actualizar_metadata(metadata, primer_bloque_libre, ultimo_bloque_usado, metadata->tamanio);
 
 }
 
+// aca reescribo leer bloques y escribir bloques pero pasandole el puntero por parametro
+void write_fs(char* nombre, int tamanio, int puntero, void* info_a_escribir){
+	t_metadata* metadata = buscar_metadata_lista_por_nombre(nombre);
+	// DEJO EL METADATA POR SI EL PUNTERO ES DEL ARCHIVO
+	FILE* archivo_bloques = fopen("bloques.dat", "w");
+	// creo que el puntero que recibe es del archivo entero del fs (osea el .dat)
+	// no se como podria ser si el puntero es relativo del archivo.
+	// tendria que calcular ese lugar en el archivo de datos entero.
+	// seria algo como sumar eso a todos los bytes previos antes del archivo
+	// o parto del byte inicial y hago eso mas el puntero
+	fseek(archivo_bloques, puntero, SEEK_SET);
+	fwrite(info_a_escribir, tamanio, 1, archivo_bloques);
+	fclose(archivo_bloques);
+}
 
+void* read_fs(char* nombre, int tamanio, int puntero){
+	void* info_leida = NULL;
+	t_metadata* metadata = buscar_metadata_lista_por_nombre(nombre);
+	// DEJO EL METADATA POR SI EL PUNTERO ES DEL ARCHIVO
+	FILE* archivo_bloques = fopen("bloques.dat", "r");
+	// creo que el puntero que recibe es del archivo entero del fs (osea el .dat)
+	// no se como podria ser si el puntero es relativo del archivo.
+	// tendria que calcular ese lugar en el archivo de datos entero.
+	// seria algo como sumar eso a todos los bytes previos antes del archivo
+	// o parto del byte inicial y hago eso mas el puntero
+	fseek(archivo_bloques, puntero, SEEK_SET);
+	fread(info_leida, tamanio, 1, archivo_bloques);
+	fclose(archivo_bloques);
+	return info_leida;
+}
 
