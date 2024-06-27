@@ -29,7 +29,9 @@ typedef enum cod_op {
 	MSG_IO_STDIN_READ,
 	MSG_MOV_OUT,
 	MSG_MOV_IN,
-	MSG_COPY_STRING
+	MSG_COPY_STRING,
+	MSG_IO_FS_READ,
+	MSG_IO_FS_WRITE
 } cod_op;
 
 typedef enum tipo_interfaz {
