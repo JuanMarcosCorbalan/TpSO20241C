@@ -2,25 +2,25 @@
 
 void iniciar_filesystem(int block_size, int block_count){
 
-
 	size_t tamanio_fs = block_count; //cantidad de bloques
 	void* puntero_bitmap = malloc(tamanio_fs);
 	bitarray = bitarray_create_with_mode(puntero_bitmap, tamanio_fs, LSB_FIRST);
 
+	// abro el archivo de bloques o lo crea si no existe
+	FILE* archivo_bloques = fopen("bloques.dat", "w");
 
 	lista_metadata = list_create();
-	/*
-	 * if(bloques_no_existe){
-	 * 	FILE* bloques = fopen("bloques.dat", "w");
-	 * }
-	 *
-	 * if(bitmap_no_existe){
-	 * 	FILE* bitmap = fopen("bitmap.dat", "w");
-	 * }
-	 *
-	 * fclose(bloques);
-	 * fclose(bitmap);
-	 */
+	// aca tendria que ver si leo un archivo que tenga los elementos de la lista
+	// si no estaba vacio el fs (seria lo correcto).
+
+	FILE* archivo_bitarray = fopen("bitmap.dat", "r");
+	// SETEO EL PUNTERO AL PRINCIPIO
+	fseek(archivo_bitarray, 0, SEEK_SET);
+	// PASO LA INFO DEL ARCHIVO AL BITARRAY
+	fread(bitarray, tamanio_fs, 1, archivo_bitarray);
+	fclose(archivo_bitarray);
+
+	fclose(archivo_bloques);
 
 }
 
@@ -29,7 +29,29 @@ void iniciar_filesystem(int block_size, int block_count){
  * se cree un archivo en el FS montado en dicha interfaz.
  *
  */
+char* crear_path_metadata(char* nombre_metadata){
+	char* path_metadata = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen(nombre_metadata) + 1);
+	strcpy(path_metadata, app_config->path_base_dialfs);
+	strcat(path_metadata, "/");
+	strcat(path_metadata, nombre_metadata);
+	return path_metadata;
+}
 
+char* crear_path_bitarray(){
+	char* path_bitarray = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bitarray.dat") + 1);
+	strcpy(path_bitarray, app_config->path_base_dialfs);
+	strcat(path_bitarray, "/");
+	strcat(path_bitarray, "bitarray.dat");
+	return path_bitarray;
+}
+
+char* crear_path_bloques(){
+	char* path_bloques = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bloques.dat") + 1);
+	strcpy(path_bloques, app_config->path_base_dialfs);
+	strcat(path_bloques, "/");
+	strcat(path_bloques, "bloques.dat");
+	return(path_bloques);
+}
 void create(char* nombre){
 
 	int primer_bloque = buscar_primer_bloque_bitmap_libre();
@@ -98,14 +120,23 @@ int buscar_primer_bloque_bitmap_libre(){
 }
 
 void ocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
+	FILE* archivo_bitarray = fopen("bitmap.dat","w+");
 	for(int i=bloque_inicial; i <=bloque_final; i++){
 		bitarray_set_bit(bitarray, i);
+		fseek(archivo_bitarray, i, SEEK_SET);
+		// setea un solo bit en 1, no se si esta bien esto
+		fwrite(1,1,1,archivo_bitarray);
+		fclose(archivo_bitarray);
 	}
 }
 
 void desocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
+	FILE* archivo_bitarray = fopen("bitmap.dat", "w+");
 	for(int i=bloque_inicial; i <= bloque_final; i++){
+		fseek(archivo_bitarray, i, SEEK_SET);
 		bitarray_clean_bit(bitarray, i);
+		fwrite(0,1,1, archivo_bitarray);
+		fclose(archivo_bitarray);
 	}
 }
 
@@ -125,18 +156,18 @@ void crear_metadata(char* nombre, int primer_bloque){
 }
 
 t_config* leer_metadata(char* nombre){
-	t_config *metadata = config_create(nombre);
+	t_config* metadata = config_create(nombre);
 	return metadata;
 }
 
 void agregar_a_lista_metadata(char* nombre, int primer_bloque) {
 
-	t_metadata* nuevo_metadata;
+	t_metadata* nuevo_metadata = malloc(sizeof(t_metadata));
+	nuevo_metadata->nombre = malloc(strlen(nombre) + 1);
 	strcpy(nuevo_metadata->nombre, nombre);
 	nuevo_metadata->bloque_inicial = primer_bloque;
 	nuevo_metadata->bloque_final = primer_bloque;
 	nuevo_metadata->tamanio = 0;
-
 
 	list_add(lista_metadata, nuevo_metadata);
 }
@@ -302,14 +333,12 @@ void compactacion(t_metadata* metadata){
 // aca reescribo leer bloques y escribir bloques pero pasandole el puntero por parametro
 void write_fs(char* nombre, int tamanio, int puntero, void* info_a_escribir){
 	t_metadata* metadata = buscar_metadata_lista_por_nombre(nombre);
-	// DEJO EL METADATA POR SI EL PUNTERO ES DEL ARCHIVO
 	FILE* archivo_bloques = fopen("bloques.dat", "w");
-	// creo que el puntero que recibe es del archivo entero del fs (osea el .dat)
-	// no se como podria ser si el puntero es relativo del archivo.
+	// el puntero es relativo del archivo.
 	// tendria que calcular ese lugar en el archivo de datos entero.
 	// seria algo como sumar eso a todos los bytes previos antes del archivo
 	// o parto del byte inicial y hago eso mas el puntero
-	fseek(archivo_bloques, puntero, SEEK_SET);
+	fseek(archivo_bloques, (metadata->bloque_inicial * app_config->block_size) + puntero, SEEK_SET);
 	fwrite(info_a_escribir, tamanio, 1, archivo_bloques);
 	fclose(archivo_bloques);
 }
@@ -317,14 +346,12 @@ void write_fs(char* nombre, int tamanio, int puntero, void* info_a_escribir){
 void* read_fs(char* nombre, int tamanio, int puntero){
 	void* info_leida = NULL;
 	t_metadata* metadata = buscar_metadata_lista_por_nombre(nombre);
-	// DEJO EL METADATA POR SI EL PUNTERO ES DEL ARCHIVO
 	FILE* archivo_bloques = fopen("bloques.dat", "r");
-	// creo que el puntero que recibe es del archivo entero del fs (osea el .dat)
-	// no se como podria ser si el puntero es relativo del archivo.
+	// el puntero es relativo del archivo.
 	// tendria que calcular ese lugar en el archivo de datos entero.
 	// seria algo como sumar eso a todos los bytes previos antes del archivo
 	// o parto del byte inicial y hago eso mas el puntero
-	fseek(archivo_bloques, puntero, SEEK_SET);
+	fseek(archivo_bloques, (metadata->bloque_inicial * app_config->block_size) + puntero, SEEK_SET);
 	fread(info_leida, tamanio, 1, archivo_bloques);
 	fclose(archivo_bloques);
 	return info_leida;
