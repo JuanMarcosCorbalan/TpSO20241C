@@ -3,7 +3,7 @@
 void iniciar_filesystem(int block_size, int block_count){
 
 	tamanio_bitarray = block_count/8; //bits/8 -> tamanio en bytes
-	void* puntero_bitmap = malloc(tamanio_bitarray);
+
 	path_bitarray = crear_path_bitarray();
 
 	// abro el archivo de bloques o lo crea si no existe
@@ -11,25 +11,13 @@ void iniciar_filesystem(int block_size, int block_count){
 
 	FILE* archivo_bloques = fopen(path_bloques, "wb+");
 
-
 	lista_metadata = list_create();
+	leer_archivos_existentes();
 	// aca tendria que ver si leo un archivo que tenga los elementos de la lista
 	// si no estaba vacio el fs (seria lo correcto).
 
+	iniciar_bitmap(tamanio_bitarray);
 
-	//char buffer[tamanio_bitarray];
-	memset(puntero_bitmap, 0, tamanio_bitarray);
-	bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
-
-
-	FILE* archivo_bitarray = fopen(path_bitarray, "wb+");
-	fflush(archivo_bitarray);
-	ftruncate(fileno(archivo_bitarray), tamanio_bitarray);
-
-	bitarray_mem = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
-	// aca mapeo lo que hay en el arhcivo al bitarray_mem, ya esta la info ahi. el bitmap creado estaba en cero, ahora si el archivo tenia cosas, al hacer el mmap entiendo que agarra la info de ahi
-
-	msync(bitarray_mem, tamanio_bitarray, MS_SYNC);
 //	if(archivo_bitarray) {
 //		// si ya existe se escribe en el creado lo que hay en el archivo
 //		// SETEO EL PUNTERO AL PRINCIPIO
@@ -41,12 +29,64 @@ void iniciar_filesystem(int block_size, int block_count){
 
 
 
-
-	fclose(archivo_bitarray);
 	fclose(archivo_bloques);
 
 }
 
+
+void iniciar_bitmap(int tamanio_bitarray){
+
+	void* puntero_bitmap = malloc(tamanio_bitarray);
+	//char buffer[tamanio_bitarray];
+	memset(puntero_bitmap, 0, tamanio_bitarray);
+	bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
+
+	FILE* archivo_bitarray = fopen(path_bitarray, "wb+");
+	fflush(archivo_bitarray);
+	ftruncate(fileno(archivo_bitarray), tamanio_bitarray);
+
+	bitarray_mem = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
+	// aca mapeo lo que hay en el arhcivo al bitarray_mem, ya esta la info ahi. el bitmap creado estaba en cero, ahora si el archivo tenia cosas, al hacer el mmap entiendo que agarra la info de ahi
+
+	msync(bitarray_mem, tamanio_bitarray, MS_SYNC);
+
+	fclose(archivo_bitarray);
+}
+
+void leer_archivos_existentes(){
+    DIR *d;
+    struct dirent *dir;
+    int bloque_inicial = 0;
+    int bloque_final = 0;
+    int tamanio = 0;
+
+    char* path_metadatas = malloc(strlen(app_config->path_base_dialfs) + strlen("/fcbs"));
+    strcpy(path_metadatas, app_config->path_base_dialfs);
+    strcat(path_metadatas, "/fcbs");
+    d = opendir(path_metadatas);
+
+    if (d){
+    	while((dir = readdir(d)) != NULL){
+    		if(dir->d_type == DT_REG) {
+    			char* path_config_a_cargar = malloc(strlen(path_metadatas) + strlen("/") + strlen(dir->d_name) + 1);
+    			strcpy(path_config_a_cargar, path_metadatas);
+    			strcat(path_config_a_cargar, "/");
+    			strcat(path_config_a_cargar, dir->d_name);
+    			//srcpy(metadata[count]->nombre, dir->d_name);
+    			t_config* config_a_cargar = config_create(path_config_a_cargar);
+    			bloque_inicial = config_get_int_value(config_a_cargar, "BLOQUE_INICIAL");
+    			tamanio = config_get_int_value(config_a_cargar, "TAMANIO_ARCHIVO");
+    			bloque_final = bloque_inicial + (tamanio/app_config->block_size);
+    			agregar_a_lista_metadata(dir->d_name, bloque_inicial, bloque_final, tamanio);
+    			free(path_config_a_cargar);
+    		}
+
+    	}
+    	closedir(d);
+    } else {
+    	log_info(app_log, "No se pudo abrir el directorio");
+    }
+}
 /*
  * IO_FS_CREATE (Interfaz, Nombre Archivo): Esta instrucción solicita al Kernel que mediante la interfaz seleccionada,
  * se cree un archivo en el FS montado en dicha interfaz.
@@ -75,18 +115,18 @@ char* crear_path_bloques(){
 	strcat(path_bloques_nuevo, "bloques.dat");
 	return(path_bloques_nuevo);
 }
-void create(char* nombre){
+void create(char* nombre, char* path){
 
 	int primer_bloque = buscar_primer_bloque_bitmap_libre();
 	ocupar_bloques_bitmap(1, primer_bloque);
 
-	crear_metadata(nombre, primer_bloque);
+	crear_metadata(path, primer_bloque);
 
-	agregar_a_lista_metadata(nombre, primer_bloque);
+	agregar_a_lista_metadata(nombre, primer_bloque, primer_bloque, 0);
 }
 
-void delete(char* nombre){
-	t_config* metadata = leer_metadata(nombre);
+void delete(char* nombre, char* path){
+	t_config* metadata = leer_metadata(path);
 	int bloque_inicial = config_get_int_value(metadata, "BLOQUE_INICIAL");
 	int tamanio = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
 
@@ -166,34 +206,34 @@ void desocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
 	}
 }
 
-void crear_metadata(char* nombre, int primer_bloque){
-	FILE* archivo_metadata = fopen(nombre, "w");
+void crear_metadata(char* path, int primer_bloque){
+	FILE* archivo_metadata = fopen(path, "w");
 	fclose(archivo_metadata);
 
-	t_config *metadata = config_create(nombre);
+	t_config *metadata = config_create(path);
 
 	char primer_bloque_str[12];  // Suficientemente grande para contener el valor máximo de un uint32_t
 	sprintf(primer_bloque_str, "%u", primer_bloque);
 	config_set_value(metadata, "BLOQUE_INICIAL", primer_bloque_str);
 	config_set_value(metadata, "TAMANIO_ARCHIVO", "0");
 
-	config_save_in_file(metadata, nombre);
+	config_save_in_file(metadata, path);
 	config_destroy(metadata);
 }
 
-t_config* leer_metadata(char* nombre){
-	t_config* metadata = config_create(nombre);
+t_config* leer_metadata(char* path){
+	t_config* metadata = config_create(path);
 	return metadata;
 }
 
-void agregar_a_lista_metadata(char* nombre, int primer_bloque) {
+void agregar_a_lista_metadata(char* nombre, int primer_bloque, int bloque_final, int tamanio) {
 
 	t_metadata* nuevo_metadata = malloc(sizeof(t_metadata));
 	nuevo_metadata->nombre = malloc(strlen(nombre) + 1);
 	strcpy(nuevo_metadata->nombre, nombre);
 	nuevo_metadata->bloque_inicial = primer_bloque;
-	nuevo_metadata->bloque_final = primer_bloque;
-	nuevo_metadata->tamanio = 0;
+	nuevo_metadata->bloque_final = bloque_final;
+	nuevo_metadata->tamanio = tamanio;
 
 	list_add(lista_metadata, nuevo_metadata);
 }
