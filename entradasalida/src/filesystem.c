@@ -2,24 +2,47 @@
 
 void iniciar_filesystem(int block_size, int block_count){
 
-	size_t tamanio_fs = block_count; //cantidad de bloques
-	void* puntero_bitmap = malloc(tamanio_fs);
-	bitarray = bitarray_create_with_mode(puntero_bitmap, tamanio_fs, LSB_FIRST);
+	tamanio_bitarray = block_count/8; //bits/8 -> tamanio en bytes
+	void* puntero_bitmap = malloc(tamanio_bitarray);
+	path_bitarray = crear_path_bitarray();
 
 	// abro el archivo de bloques o lo crea si no existe
-	FILE* archivo_bloques = fopen("bloques.dat", "w");
+	path_bloques = crear_path_bloques();
+
+	FILE* archivo_bloques = fopen(path_bloques, "wb+");
+
 
 	lista_metadata = list_create();
 	// aca tendria que ver si leo un archivo que tenga los elementos de la lista
 	// si no estaba vacio el fs (seria lo correcto).
 
-	FILE* archivo_bitarray = fopen("bitmap.dat", "r");
-	// SETEO EL PUNTERO AL PRINCIPIO
-	fseek(archivo_bitarray, 0, SEEK_SET);
-	// PASO LA INFO DEL ARCHIVO AL BITARRAY
-	fread(bitarray, tamanio_fs, 1, archivo_bitarray);
-	fclose(archivo_bitarray);
 
+	//char buffer[tamanio_bitarray];
+	memset(puntero_bitmap, 0, tamanio_bitarray);
+	bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
+
+
+	FILE* archivo_bitarray = fopen(path_bitarray, "wb+");
+	fflush(archivo_bitarray);
+	ftruncate(fileno(archivo_bitarray), tamanio_bitarray);
+
+	bitarray_mem = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
+	// aca mapeo lo que hay en el arhcivo al bitarray_mem, ya esta la info ahi. el bitmap creado estaba en cero, ahora si el archivo tenia cosas, al hacer el mmap entiendo que agarra la info de ahi
+
+	msync(bitarray_mem, tamanio_bitarray, MS_SYNC);
+//	if(archivo_bitarray) {
+//		// si ya existe se escribe en el creado lo que hay en el archivo
+//		// SETEO EL PUNTERO AL PRINCIPIO
+//		fseek(archivo_bitarray, 0, SEEK_SET);
+//		// PASO LA INFO DEL ARCHIVO AL BITARRAY
+//		fread(bitarray_mem, tamanio_bitarray, 1, archivo_bitarray);
+//		msync(bitarray_mem, tamanio_bitarray, MS_SYNC);
+//	}
+
+
+
+
+	fclose(archivo_bitarray);
 	fclose(archivo_bloques);
 
 }
@@ -30,27 +53,27 @@ void iniciar_filesystem(int block_size, int block_count){
  *
  */
 char* crear_path_metadata(char* nombre_metadata){
-	char* path_metadata = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen(nombre_metadata) + 1);
-	strcpy(path_metadata, app_config->path_base_dialfs);
-	strcat(path_metadata, "/");
-	strcat(path_metadata, nombre_metadata);
-	return path_metadata;
+	char* path_metadata_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/fcbs/") + strlen(nombre_metadata) + 1);
+	strcpy(path_metadata_nuevo, app_config->path_base_dialfs);
+	strcat(path_metadata_nuevo, "/fcbs/");
+	strcat(path_metadata_nuevo, nombre_metadata);
+	return path_metadata_nuevo;
 }
 
 char* crear_path_bitarray(){
-	char* path_bitarray = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bitarray.dat") + 1);
-	strcpy(path_bitarray, app_config->path_base_dialfs);
-	strcat(path_bitarray, "/");
-	strcat(path_bitarray, "bitarray.dat");
-	return path_bitarray;
+	char* path_bitarray_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bitarray.dat") + 1);
+	strcpy(path_bitarray_nuevo, app_config->path_base_dialfs);
+	strcat(path_bitarray_nuevo, "/");
+	strcat(path_bitarray_nuevo, "bitarray.dat");
+	return path_bitarray_nuevo;
 }
 
 char* crear_path_bloques(){
-	char* path_bloques = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bloques.dat") + 1);
-	strcpy(path_bloques, app_config->path_base_dialfs);
-	strcat(path_bloques, "/");
-	strcat(path_bloques, "bloques.dat");
-	return(path_bloques);
+	char* path_bloques_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bloques.dat") + 1);
+	strcpy(path_bloques_nuevo, app_config->path_base_dialfs);
+	strcat(path_bloques_nuevo, "/");
+	strcat(path_bloques_nuevo, "bloques.dat");
+	return(path_bloques_nuevo);
 }
 void create(char* nombre){
 
@@ -120,23 +143,26 @@ int buscar_primer_bloque_bitmap_libre(){
 }
 
 void ocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
-	FILE* archivo_bitarray = fopen("bitmap.dat","w+");
+	//FILE* archivo_bitarray = fopen("bitmap.dat","w+");
 	for(int i=bloque_inicial; i <=bloque_final; i++){
-		bitarray_set_bit(bitarray, i);
-		fseek(archivo_bitarray, i, SEEK_SET);
+		bitarray_set_bit(bitarray_mem, i);
+		//fseek(archivo_bitarray, i, SEEK_SET);
 		// setea un solo bit en 1, no se si esta bien esto
-		fwrite(1,1,1,archivo_bitarray);
-		fclose(archivo_bitarray);
+		//fwrite(1,1,1,archivo_bitarray);
+		msync(bitarray_mem,tamanio_bitarray, MS_SYNC);
+
+		//fclose(archivo_bitarray);
 	}
 }
 
 void desocupar_bloques_bitmap(int bloque_inicial, int bloque_final){
-	FILE* archivo_bitarray = fopen("bitmap.dat", "w+");
+	//FILE* archivo_bitarray = fopen("bitmap.dat", "w+");
 	for(int i=bloque_inicial; i <= bloque_final; i++){
-		fseek(archivo_bitarray, i, SEEK_SET);
-		bitarray_clean_bit(bitarray, i);
-		fwrite(0,1,1, archivo_bitarray);
-		fclose(archivo_bitarray);
+		//fseek(archivo_bitarray, i, SEEK_SET);
+		bitarray_clean_bit(bitarray_mem, i);
+		//fwrite(0,1,1, archivo_bitarray);
+		msync(bitarray_mem, tamanio_bitarray, MS_SYNC);
+		//fclose(archivo_bitarray);
 	}
 }
 

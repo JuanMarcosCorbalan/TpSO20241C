@@ -6,12 +6,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "config.h"
+#include <dirent.h>
+#include <sys/mman.h>
 
 
 //extern t_log* app_log;
 extern t_io_config* app_config;
 extern t_bitarray* bitarray;
 extern t_list* lista_metadata;
+
+extern char* path_metadata;
+extern char* path_bitarray;
+extern char* path_bloques;
+extern void* bitarray_mem;
+extern size_t tamanio_bitarray;
 
 //extern sem_t sem_conexiones;
 //extern int socket_kernel;
@@ -91,5 +99,10 @@ int escribir_bloques(int tamanio_a_escribir, int bloque_inicial, int bloque_fina
 
 void write_fs(char* nombre, int tamanio, int puntero, void* info_a_escribir);
 void* read_fs(char* nombre, int tamanio, int puntero);
+
+
+char* crear_path_bitarray();
+char* crear_path_bloques();
+char* crear_path_metadata(char* nombre_metadata);
 
 #endif /* HEADERS_FILESYSTEM_H_ */
