@@ -53,6 +53,10 @@ void operar_kernel() {
 		char* linea_consola;
 		char* sub_linea_consola;
 		uint32_t estado_escritura;
+		dt_fs_name* fs_name;
+		dt_fs_rw* fs_rw;
+		dt_fs_truncate* fs_truncate;
+		char* valor_escritura;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_VALIDAR_INTERFAZ:
@@ -102,6 +106,44 @@ void operar_kernel() {
 				request_desbloquear_proceso_io(socket_kernel, io_std->pid);
 				free(linea_consola);
 				free(io_std);
+				break;
+			case MSG_IO_FS_CREATE:
+				fs_name = deserializar_iniciar_archivo(paquete->buffer);
+				// OPERAS CREATE
+				free(fs_name->nombre_archivo);
+				free(fs_name);
+				break;
+			case MSG_IO_FS_DELETE:
+				fs_name = deserializar_borrar_archivo(paquete->buffer);
+				// OPERAS DELETE
+				free(fs_name->nombre_archivo);
+				free(fs_name);
+				break;
+			case MSG_IO_FS_TRUNCATE:
+				fs_truncate = deserializar_truncate_archivo(paquete->buffer);
+				// OPERAS TRUNCATE
+				free(fs_truncate->fs_name->nombre_archivo);
+				free(fs_truncate->fs_name);
+				free(fs_truncate);
+				break;
+			case MSG_IO_FS_READ:
+				fs_rw = deserializar_fs_rw(paquete->buffer);
+				valor_escritura = ""; // OPERAR READ PARA OBTENER DEL ARCHIVO EL VALOR DESEADO
+				request_fs_escritura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, valor_escritura);
+				free(valor_escritura);
+				free(fs_rw->fs_name->nombre_archivo);
+				free(fs_rw->fs_name);
+				free(fs_rw);
+				break;
+			case MSG_IO_FS_WRITE:
+				fs_rw = deserializar_fs_rw(paquete->buffer);
+				request_fs_lectura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, fs_rw->registro_tamanio);
+				valor_escritura = deserializar_valor_fs_lectura(socket_memoria);
+				// OPERAR WRITE
+				free(valor_escritura);
+				free(fs_rw->fs_name->nombre_archivo);
+				free(fs_rw->fs_name);
+				free(fs_rw);
 				break;
 			default:
 				seguir_operando = 0;

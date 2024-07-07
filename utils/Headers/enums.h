@@ -31,7 +31,12 @@ typedef enum cod_op {
 	MSG_MOV_IN,
 	MSG_COPY_STRING,
 	MSG_PROCESO_BLOQUEADO_MM,
-	MSG_ESPERAR_IO
+	MSG_ESPERAR_IO,
+	MSG_IO_FS_CREATE,
+	MSG_IO_FS_DELETE,
+	MSG_IO_FS_TRUNCATE,
+	MSG_IO_FS_READ,
+	MSG_IO_FS_WRITE
 } cod_op;
 
 typedef enum tipo_interfaz {

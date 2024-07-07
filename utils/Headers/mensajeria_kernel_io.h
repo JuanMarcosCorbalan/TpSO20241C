@@ -26,6 +26,35 @@ typedef struct dt_exec_io_std {
 	uint32_t tamanio;
 } dt_io_std;
 
+typedef struct dt_fs_create {
+	uint32_t pid;
+	uint32_t tamanio_nombre_archivo;
+	char* nombre_archivo;
+} dt_fs_name;
+
+typedef struct dt_fs_truncate {
+	dt_fs_name* fs_name;
+	uint32_t tamanio;
+} dt_fs_truncate;
+
+typedef struct dt_fs_rw {
+	dt_fs_name* fs_name;
+	uint32_t registro_direccion;
+	uint32_t registro_tamanio;
+	uint32_t registro_puntero_archivo;
+} dt_fs_rw;
+
+void request_iniciar_archivo(int socket, uint32_t pid, char* nombre_archivo);
+void request_borrar_archivo(int socket, uint32_t pid, char* nombre_archivo);
+dt_fs_name* deserializar_fs_name(t_buffer* buffer);
+
+void request_truncate_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t tamanio);
+dt_fs_truncate* deserializar_truncate_archivo(t_buffer* buffer);
+
+void request_leer_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo);
+void request_escribir_archivo(int socket, uint32_t pid, char* nombre_archivo, uint32_t registro_direccion, uint32_t registro_tamanio, uint32_t registro_puntero_archivo);
+dt_fs_rw* deserializar_fs_rw(t_buffer* buffer);
+
 void request_iniciar_interfaz(int socket, char* nombre);
 dt_iniciar_interfaz* deserializar_iniciar_interfaz(t_buffer* buffer);
 
