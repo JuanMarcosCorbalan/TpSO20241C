@@ -59,16 +59,16 @@ void operar(int *socket_cliente) {
 				break;
 			case MSG_MOV_IN:
 				mov = deserializar_mov(paquete->buffer);
-				stream_rw = lectura_memoria(mov->pid, mov->direccion_fisica, sizeof(uint32_t));
+				stream_rw = lectura_memoria(mov->pid, mov->direccion_fisica, 1);
 				memcpy(&valor_registro, stream_rw, sizeof(uint32_t));
 				usleep(app_config->retardo_respuesta * 1000);
 				request_valor_mov_in(*socket_cliente, valor_registro);
 				break;
 			case MSG_MOV_OUT:
 				mov = deserializar_mov(paquete->buffer);
-				stream_rw = malloc(sizeof(uint32_t));
+				stream_rw = malloc(1);
 				memcpy(stream_rw, &mov->valor_registro, sizeof(uint32_t));
-				estado_escritura = escritura_memoria(mov->pid, mov->direccion_fisica, sizeof(uint32_t), stream_rw);
+				estado_escritura = escritura_memoria(mov->pid, mov->direccion_fisica, 1, stream_rw);
 				usleep(app_config->retardo_respuesta * 1000);
 				request_status_mov_out(*socket_cliente, estado_escritura);
 				free(stream_rw);
@@ -77,14 +77,14 @@ void operar(int *socket_cliente) {
 				rw_memoria = deserializar_escritura_memoria(paquete->buffer);
 				stream_rw = malloc(rw_memoria->tamanio_read_write);
 				memcpy(stream_rw, rw_memoria->valor_std, rw_memoria->tamanio_read_write);
-				estado_escritura = escritura_memoria(pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write, stream_rw);
+				estado_escritura = escritura_memoria(rw_memoria->pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write, stream_rw);
 				usleep(app_config->retardo_respuesta * 1000);
 				request_status_escritura_memoria(*socket_cliente, estado_escritura);
 				free(stream_rw);
 				break;
 			case MSG_IO_STDOUT_WRITE:
 				rw_memoria = deserializar_lectura_memoria(paquete->buffer);
-				stream_rw = lectura_memoria(pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write);
+				stream_rw = lectura_memoria(rw_memoria->pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write);
 				valor_lectura = malloc(rw_memoria->tamanio_read_write);
 				memcpy(valor_lectura, stream_rw, rw_memoria->tamanio_read_write);
 				usleep(app_config->retardo_respuesta * 1000);

@@ -18,6 +18,7 @@ typedef struct t_interfaz_io {
 	uint32_t estado_conexion;
 	uint8_t estado_validacion;
 	sem_t sem_bloqueo_global;
+	sem_t sem_espera_global;
 	int* socket_io;
 	t_list* bloqueados;
 } t_interfaz_io;

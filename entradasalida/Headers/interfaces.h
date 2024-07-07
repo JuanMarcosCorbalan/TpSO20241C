@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "config.h"
+#include <pthread.h>
 #include "log.h"
 #include "../../utils/Headers/mensajeria_kernel_io.h"
 #include "../../utils/Headers/models.h"
@@ -17,6 +18,7 @@
 extern t_io_config* app_config;
 extern int socket_kernel;
 extern int socket_memoria;
+extern pthread_mutex_t mutex_kernel;
 
 void iniciar_interfaces(char* nombre);
 

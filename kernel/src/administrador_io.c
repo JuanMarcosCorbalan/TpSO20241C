@@ -46,6 +46,7 @@ void agregar_interfaz(char* nombre, int* socket) {
 	interfaz->socket_io = socket;
 	interfaz->estado_validacion = 0;
 	sem_init(&interfaz->sem_bloqueo_global, 0, 0);
+	sem_init(&interfaz->sem_espera_global, 0, 0);
 	list_add(lista_interfaces, interfaz);
 }
 
@@ -118,6 +119,10 @@ void operar_io(int* socket_io) {
 			case MSG_ESTADO_VALIDAR_INTERFAZ:
 				interfaz->estado_validacion = deserializar_estado_validacion_instruccion(paquete->buffer);
 				sem_post(&interfaz->sem_bloqueo_global);
+				break;
+			case MSG_ESPERAR_IO:
+				pid = deserializar_proceso_io_esperando(paquete->buffer);
+				sem_post(&interfaz->sem_espera_global);
 				break;
 			default:
 				interfaz->estado_conexion = 0;

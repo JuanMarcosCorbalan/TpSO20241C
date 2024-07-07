@@ -15,6 +15,8 @@ void iniciar_espacio_memoria() {
     {
         bitarray_clean_bit(bitarray_memoria, c);
     }
+
+	pthread_mutex_init(&mutex_acceso_memoria, NULL);
 }
 
 uint32_t obtener_numero_marco_disponible() {
@@ -44,7 +46,7 @@ t_marco* crear_marco(uint32_t pid, uint32_t numero_marco, uint32_t numero_pagina
 	nuevo_marco->pid = pid;
 	nuevo_marco->tamanio_ocupado = 0;
 	nuevo_marco->base = numero_marco * app_config->tam_pagina;
-	nuevo_marco->limite = nuevo_marco->base + app_config->tam_pagina;
+	nuevo_marco->limite = nuevo_marco->base + app_config->tam_pagina - 1;
 	nuevo_marco->numero_pagina = numero_pagina;
 
 	return nuevo_marco;
@@ -112,16 +114,16 @@ void agregar_marco_proceso(t_marcos_proceso* marcos_proceso) {
 
 uint32_t operar_resize_proceso(uint32_t pid, uint32_t tamanio_nuevo) {
 	t_marcos_proceso* marcos_proceso = obtener_entrada_marcos_proceso(pid);
-	uint32_t tamanio_actual = marcos_proceso->marcos->elements_count * app_config->tam_pagina;
-	uint32_t diferencia_tamanios = 0;
-	uint32_t diferencia_paginas = 0;
+	uint32_t marcos_asignados = marcos_proceso->marcos->elements_count;
+	uint32_t marcos_nuevos = tamanio_nuevo / app_config->tam_pagina;
 
-	if(tamanio_actual > tamanio_nuevo) {
-		logear_reduccion_proceso(pid, tamanio_actual, tamanio_nuevo);
-		diferencia_tamanios = tamanio_actual - tamanio_nuevo;
-		diferencia_paginas = diferencia_tamanios / app_config->tam_pagina;
+	if(tamanio_nuevo % app_config->tam_pagina)
+		marcos_nuevos += 1;
 
-		for(int i=0; i<diferencia_paginas; i++) {
+	if(marcos_asignados > marcos_nuevos) {
+		logear_reduccion_proceso(pid, marcos_asignados * app_config->tam_pagina, marcos_nuevos * app_config->tam_pagina);
+
+		for(int i=0; i<marcos_nuevos; i++) {
 			t_marco* ultimo_marco = obtener_ultimo_marco(pid);
 			bitarray_clean_bit(bitarray_memoria, ultimo_marco->numero_marco);
 			list_remove_element(lista_global_marcos, ultimo_marco);
@@ -130,15 +132,13 @@ uint32_t operar_resize_proceso(uint32_t pid, uint32_t tamanio_nuevo) {
 		}
 	}
 	else {
-		logear_ampliacion_proceso(pid, tamanio_actual, tamanio_nuevo);
-		diferencia_tamanios = tamanio_nuevo - tamanio_actual;
-		diferencia_paginas = diferencia_tamanios / app_config->tam_pagina;
-		uint32_t paginas_disponibles = (app_config->tam_memoria/app_config->tam_pagina) - lista_global_marcos->elements_count;
+		logear_ampliacion_proceso(pid, marcos_asignados * app_config->tam_pagina, marcos_nuevos * app_config->tam_pagina);
+		uint32_t marcos_disponibles = (app_config->tam_memoria/app_config->tam_pagina) - lista_global_marcos->elements_count;
 
-		if(diferencia_paginas > paginas_disponibles)
+		if(marcos_nuevos > marcos_disponibles)
 			return 0;
 
-		for(int i=0; i<diferencia_paginas; i++) {
+		for(int i=0; i<marcos_nuevos; i++) {
 			agregar_marco_proceso(marcos_proceso);
 		}
 	}
@@ -165,7 +165,7 @@ void* lectura_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio)
     if(marco_solicitado->pid != pid || marcos_proceso->marcos->elements_count * app_config->tam_pagina < tamanio)
     	return 0;
 
-    uint32_t disponible_a_leer = marco_solicitado->limite - direccion_fisica;
+    uint32_t disponible_a_leer = ((marco_solicitado->numero_marco + 1)* app_config->tam_pagina) - direccion_fisica;
 
     if(tamanio <= disponible_a_leer) {
     	memcpy(valor_lectura, espacio_memoria + direccion_fisica, tamanio);
@@ -178,7 +178,7 @@ void* lectura_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio)
     memcpy(valor_lectura, espacio_memoria + direccion_fisica, offset_inicial);
     tamanio_leido += offset_inicial;
     tamanio_restante -= offset_inicial;
-    uint32_t pagina_actual = marco_solicitado->numero_pagina;
+    uint32_t pagina_actual = marco_solicitado->numero_pagina + 1;
 
     while(tamanio_restante > 0) {
     	t_marco* sgte_marco = list_get(marcos_proceso->marcos, pagina_actual);
@@ -190,7 +190,7 @@ void* lectura_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio)
     		memcpy(valor_lectura + tamanio_leido, espacio_memoria + sgte_marco->base, app_config->tam_pagina);
     	    tamanio_leido += app_config->tam_pagina;
     		tamanio_restante -= app_config->tam_pagina;
-    		pagina_actual++;
+    		pagina_actual += 1;
     	}
     	else {
     		memcpy(valor_lectura + tamanio_leido, espacio_memoria + sgte_marco->base, tamanio_restante);
@@ -211,7 +211,7 @@ uint32_t escritura_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tam
     if(marco_solicitado->pid != pid || marcos_proceso->marcos->elements_count * app_config->tam_pagina < tamanio)
     	return 0;
 
-    uint32_t disponible_a_escribir = marco_solicitado->limite - direccion_fisica;
+    uint32_t disponible_a_escribir = ((marco_solicitado->numero_marco + 1)* app_config->tam_pagina) - direccion_fisica;
 
     if(tamanio <= disponible_a_escribir) {
     	memcpy(espacio_memoria + direccion_fisica, valor, tamanio);
@@ -224,7 +224,7 @@ uint32_t escritura_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tam
     memcpy(espacio_memoria + direccion_fisica, valor, offset_inicial);
     tamanio_grabado += offset_inicial;
     tamanio_restante -= offset_inicial;
-    uint32_t pagina_actual = marco_solicitado->numero_pagina;
+    uint32_t pagina_actual = marco_solicitado->numero_pagina + 1;
 
     while(tamanio_restante > 0) {
     	t_marco* sgte_marco = list_get(marcos_proceso->marcos, pagina_actual);
@@ -236,7 +236,7 @@ uint32_t escritura_memoria(uint32_t pid, uint32_t direccion_fisica, uint32_t tam
     		memcpy(espacio_memoria + sgte_marco->base, valor + tamanio_grabado, app_config->tam_pagina);
     	    tamanio_grabado += app_config->tam_pagina;
     		tamanio_restante -= app_config->tam_pagina;
-    		pagina_actual++;
+    		pagina_actual += 1;
     	}
     	else {
     		memcpy(espacio_memoria + sgte_marco->base, valor + tamanio_grabado, tamanio_restante);
@@ -251,6 +251,6 @@ uint32_t operar_copy_string(uint32_t pid, uint32_t origen, uint32_t destino, uin
 	logear_lectura_espacio_usuario(pid, origen, tamanio);
 	void* valor_lectura = lectura_memoria(pid, origen, tamanio);
 	logear_escritura_espacio_usuario(pid, destino, tamanio);
-	return escritura_memoria(pid, origen, tamanio, valor_lectura);
+	return escritura_memoria(pid, destino, tamanio, valor_lectura);
 }
 

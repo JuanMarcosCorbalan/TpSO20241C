@@ -43,6 +43,7 @@ void operar_kernel() {
 	int seguir_operando = 1;
 
 	while(seguir_operando) {
+		pthread_mutex_lock(&mutex_kernel);
 
 		t_paquete* paquete = recv_paquete(socket_kernel);
 		int operacion_valida = 0;
@@ -75,6 +76,9 @@ void operar_kernel() {
 				linea_consola = readline(">");
 				sub_linea_consola = string_substring_until(linea_consola, io_std->tamanio);
 				request_escritura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, sub_linea_consola);
+
+				request_proceso_io_esperando(socket_kernel, io_std->pid);
+
 				estado_escritura = deserializar_status_escritura_memoria(socket_memoria);
 				usleep(app_config->tiempo_unidad_trabajo * 1000);
 				if(estado_escritura)
@@ -90,6 +94,9 @@ void operar_kernel() {
 				logear_operacion(io_std->pid, paquete->codigo_operacion);
 				request_lectura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, io_std->tamanio);
 				linea_consola = deserializar_resultado_lectura_memoria(socket_memoria);
+
+				request_proceso_io_esperando(socket_kernel, io_std->pid);
+
 				printf("La cadena de caracteres obtenida de memoria es: %s \n", linea_consola);
 				usleep(app_config->tiempo_unidad_trabajo * 1000);
 				request_desbloquear_proceso_io(socket_kernel, io_std->pid);
@@ -104,10 +111,13 @@ void operar_kernel() {
 		free(paquete->buffer->stream);
 		free(paquete->buffer);
 		free(paquete);
+
+		pthread_mutex_unlock(&mutex_kernel);
 	}
 }
 
 void iniciar_interfaces(char* nombre) {
+	pthread_mutex_init(&mutex_kernel, NULL);
 	request_iniciar_interfaz(socket_kernel, nombre);
 	operar_kernel();
 }

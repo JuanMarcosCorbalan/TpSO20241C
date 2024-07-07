@@ -213,3 +213,25 @@ dt_io_std* deserializar_io_std(t_buffer* buffer) {
 	return io_std;
 }
 
+void request_proceso_io_esperando(int socket, uint32_t estado) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t);
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &estado, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_ESPERAR_IO, socket);
+}
+
+uint32_t deserializar_proceso_io_esperando(t_buffer* buffer) {
+	void* stream = buffer->stream;
+
+	uint32_t pid;
+	memcpy(&pid, stream, sizeof(uint32_t));
+
+	return pid;
+}

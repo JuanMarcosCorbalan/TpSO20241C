@@ -223,16 +223,7 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 			continue;
 		}
 
-		// FETCH
-		logear_fetch_instruccion(contexto_proceso->pid, contexto_proceso->program_counter);
-		request_proxima_instruccion(socket_memoria, contexto_proceso->pid, contexto_proceso->program_counter);
-		t_paquete* paquete = recv_paquete(socket_memoria);
-		t_instruccion* instruccion_completa = deserializar_instruccion(paquete->buffer);
-		uint8_t tipo_instruccion = convertir_tipo_instruccion(instruccion_completa->instruccion);
-		char* parametros = string_new();
-
 		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR)) {
-			printf("\nPID: %d TIEMPO INIT: %d \n", contexto_proceso->pid, contexto_proceso->quantum_ejecutados);
 
 			if(contexto_proceso->quantum_ejecutados > contexto_proceso->quantum) {
 				contexto_proceso->motivo_blocked = SIN_MOTIVO_BLOCKED;
@@ -246,6 +237,14 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 				continue;
 			}
 		}
+		
+		// FETCH
+		logear_fetch_instruccion(contexto_proceso->pid, contexto_proceso->program_counter);
+		request_proxima_instruccion(socket_memoria, contexto_proceso->pid, contexto_proceso->program_counter);
+		t_paquete* paquete = recv_paquete(socket_memoria);
+		t_instruccion* instruccion_completa = deserializar_instruccion(paquete->buffer);
+		uint8_t tipo_instruccion = convertir_tipo_instruccion(instruccion_completa->instruccion);
+		char* parametros = string_new();
 
 		contexto_proceso->program_counter += 1;
 
@@ -384,7 +383,6 @@ void ejecutar_proceso(dt_contexto_proceso* contexto_proceso, int socket_cliente)
 
 		if((contexto_proceso->algoritmo == RR || contexto_proceso->algoritmo == VRR)) {
 			contexto_proceso->quantum_ejecutados += (int) temporal_gettime(rafaga_quantum);
-			printf("\nPID: %d TIEMPO INIT: %d \n", contexto_proceso->pid, contexto_proceso->quantum_ejecutados);
 		}
 
 		temporal_destroy(rafaga_quantum);
