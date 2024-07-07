@@ -48,4 +48,7 @@ void request_io_stdin_read(int socket, uint32_t pid, uint32_t direccion_fisica, 
 void request_io_stdout_write(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio);
 dt_io_std* deserializar_io_std(t_buffer* buffer);
 
+void request_proceso_io_esperando(int socket, uint32_t pid);
+uint32_t deserializar_proceso_io_esperando(t_buffer* buffer);
+
 #endif /* HEADERS_MENSAJERIA_KERNEL_IO_H_ */

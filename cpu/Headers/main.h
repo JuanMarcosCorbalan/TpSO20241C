@@ -19,5 +19,6 @@ int existe_interrupcion;
 uint8_t motivo_interrupt_bloqueo;
 uint8_t motivo_interrupt_exit;
 t_list* lista_tlb;
+t_temporal* rafaga_quantum;
 
 #endif /* HEADERS_MAIN_H_ */

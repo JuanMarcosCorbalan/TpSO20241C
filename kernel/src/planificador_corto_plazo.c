@@ -128,20 +128,26 @@ void ejecutar_proceso(t_pcb* proceso) {
 				contexto_proceso = deserializar_contexto_proceso(paquete->buffer);
 				actualizar_contexto_pcb(contexto_proceso, proceso);
 
-				if(contexto_proceso->motivo_exit == SUCCESS)
-					logear_fin_proceso(contexto_proceso->pid, "SUCCESS");
-
-				else if(contexto_proceso->motivo_exit == OUT_OF_MEMORY)
-					logear_fin_proceso(contexto_proceso->pid, "OUT_OF_MEMORY");
-
-				else if(contexto_proceso->motivo_exit == INVALID_RESOURCE)
-					logear_fin_proceso(contexto_proceso->pid, "INVALID_RESOURCE");
-
-				else if(contexto_proceso->motivo_exit == INVALID_WRITE)
-					logear_fin_proceso(contexto_proceso->pid, "INVALID_WRITE");
-
-				else
-					logear_fin_proceso(contexto_proceso->pid, "SIN_MOTIVO");
+				switch(contexto_proceso->motivo_exit) {
+					case SUCCESS:
+						logear_fin_proceso(contexto_proceso->pid, "SUCCESS");
+						break;
+					case OUT_OF_MEMORY:
+						logear_fin_proceso(contexto_proceso->pid, "OUT_OF_MEMORY");
+						break;
+					case INVALID_RESOURCE:
+						logear_fin_proceso(contexto_proceso->pid, "INVALID_RESOURCE");
+						break;
+					case INVALID_WRITE:
+						logear_fin_proceso(contexto_proceso->pid, "INVALID_WRITE");
+						break;
+					case SUCCESS_CONSOLA:
+						logear_fin_proceso(contexto_proceso->pid, "SUCCESS_CONSOLA");
+						break;
+					default:
+						logear_fin_proceso(contexto_proceso->pid, "SIN_MOTIVO");
+						break;
+				}
 
 				finalizar(proceso);
 				seguir_operando = 0;
@@ -168,10 +174,11 @@ void ejecutar_proceso(t_pcb* proceso) {
 					break;
 				}
 
-				bloquear(proceso);
 				request_io_stdin_read(*aux_interfaz->socket_io, std->contexto_proceso->pid, std->direccion_fisica, std->tamanio);
+				bloquear(proceso);
 				list_add(aux_interfaz->bloqueados, proceso);
 				logear_motivo_bloqueo(proceso->pid, std->nombre_interfaz);
+				sem_wait(&aux_interfaz->sem_espera_global);
 				seguir_operando = 0;
 				break;
 			case MSG_IO_STDOUT_WRITE:
@@ -195,10 +202,11 @@ void ejecutar_proceso(t_pcb* proceso) {
 					break;
 				}
 
-				bloquear(proceso);
 				request_io_stdout_write(*aux_interfaz->socket_io, std->contexto_proceso->pid, std->direccion_fisica, std->tamanio);
+				bloquear(proceso);
 				list_add(aux_interfaz->bloqueados, proceso);
 				logear_motivo_bloqueo(proceso->pid, std->nombre_interfaz);
+				sem_wait(&aux_interfaz->sem_espera_global);
 				seguir_operando = 0;
 				break;
 			default:

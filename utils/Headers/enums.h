@@ -30,7 +30,8 @@ typedef enum cod_op {
 	MSG_MOV_OUT,
 	MSG_MOV_IN,
 	MSG_COPY_STRING,
-	MSG_PROCESO_BLOQUEADO_MM
+	MSG_PROCESO_BLOQUEADO_MM,
+	MSG_ESPERAR_IO
 } cod_op;
 
 typedef enum tipo_interfaz {
@@ -73,14 +74,15 @@ typedef enum motivo_exit {
 	SIN_MOTIVO_EXIT,
 	SUCCESS,
 	INVALID_RESOURCE,
-	INVALID_WRITE
+	INVALID_WRITE,
+	OUT_OF_MEMORY,
+	SUCCESS_CONSOLA
 } motivo_exit;
 
 typedef enum motivo_blocked {
 	SIN_MOTIVO_BLOCKED,
 	INTERFAZ,
-	RECURSO,
-	OUT_OF_MEMORY
+	RECURSO
 } motivo_blocked;
 
 typedef enum estado_proceso {

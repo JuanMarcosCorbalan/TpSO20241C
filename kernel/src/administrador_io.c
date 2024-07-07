@@ -46,6 +46,7 @@ void agregar_interfaz(char* nombre, int* socket) {
 	interfaz->socket_io = socket;
 	interfaz->estado_validacion = 0;
 	sem_init(&interfaz->sem_bloqueo_global, 0, 0);
+	sem_init(&interfaz->sem_espera_global, 0, 0);
 	list_add(lista_interfaces, interfaz);
 }
 
@@ -63,11 +64,11 @@ void desbloquear_por_io(t_interfaz_io* interfaz, uint32_t pid) {
 	t_pcb* proceso_desbloqueado = list_remove_by_condition(interfaz->bloqueados, remover_por_pid);
 	remover_pcb(proceso_desbloqueado, proceso_desbloqueado->estado);
 
-	if(strcmp(app_config->algoritmo_planificacion, "VRR") && proceso_desbloqueado->quantum_ejecutados <= app_config->quantum && proceso_desbloqueado->quantum_ejecutados > 1) {
+	if(strcmp(app_config->algoritmo_planificacion, "VRR") == 0 && proceso_desbloqueado->quantum_ejecutados <= app_config->quantum && proceso_desbloqueado->quantum_ejecutados > 0) {
 		agregar_pcb(proceso_desbloqueado, V_READY);
 	}
 	else {
-		agregar_pcb(proceso_desbloqueado, READY);
+	agregar_pcb(proceso_desbloqueado, READY);
 	}
 
 	sem_post(&sem_lista_ready);
@@ -118,6 +119,10 @@ void operar_io(int* socket_io) {
 			case MSG_ESTADO_VALIDAR_INTERFAZ:
 				interfaz->estado_validacion = deserializar_estado_validacion_instruccion(paquete->buffer);
 				sem_post(&interfaz->sem_bloqueo_global);
+				break;
+			case MSG_ESPERAR_IO:
+				pid = deserializar_proceso_io_esperando(paquete->buffer);
+				sem_post(&interfaz->sem_espera_global);
 				break;
 			default:
 				interfaz->estado_conexion = 0;

@@ -7,6 +7,7 @@
 #include <commons/collections/list.h>
 #include <commons/bitarray.h>
 #include <math.h>
+#include <pthread.h>
 
 typedef struct t_marco {
 	uint32_t numero_marco;
@@ -30,6 +31,7 @@ extern t_bitarray* bitarray_memoria;
 extern void* espacio_memoria;
 extern void* bits_memoria;
 extern void* puntero_bitmap;
+extern pthread_mutex_t mutex_acceso_memoria;
 
 void iniciar_espacio_memoria();
 void iniciar_espacio_memoria_proceso(uint32_t pid);

@@ -1,25 +1,5 @@
 #include "../Headers/conexiones.h"
 
-void operar_dispatch(int* socket_cliente) {
-	int seguir_operando = 1;
-
-	while(seguir_operando) {
-		t_paquete* paquete_inicial = recv_paquete(*socket_cliente);
-		dt_contexto_proceso* contexto_proceso = deserializar_contexto_proceso(paquete_inicial->buffer);
-
-		ejecutar_proceso(contexto_proceso, *socket_cliente);
-
-		free(contexto_proceso->registros_cpu);
-		free(contexto_proceso);
-		free(paquete_inicial->buffer->stream);
-		free(paquete_inicial->buffer);
-		free(paquete_inicial);
-	}
-
-	close(*socket_cliente);
-	free(socket_cliente);
-}
-
 void operar_interrupt(int* socket_cliente) {
 	int seguir_operando = 1;
 

@@ -21,6 +21,7 @@
 extern t_log* app_log;
 extern t_memoria_config* app_config;
 extern t_list* instrucciones_procesos;
+extern pthread_mutex_t mutex_acceso_memoria;
 
 void iniciar_servidor();
 

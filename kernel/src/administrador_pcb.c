@@ -9,6 +9,8 @@ char* convertir_estado_proceso(uint8_t estado) {
 		return "EXEC";
 	else if(estado == BLOCKED)
 		return "BLOCKED";
+	else if(estado == V_READY)
+		return "READY+";
 	else
 		return "EXIT";
 }
@@ -48,7 +50,7 @@ t_pcb* crear_pcb(char* path_instrucciones) {
 	nuevo_pcb->estado = NEW;
 	nuevo_pcb->program_counter = 1;
 	nuevo_pcb->quantum = app_config->quantum;
-	nuevo_pcb->quantum_ejecutados = 1;
+	nuevo_pcb->quantum_ejecutados = 0;
 	nuevo_pcb->algoritmo = obtener_algoritmo_planificacion();
 	nuevo_pcb->motivo_blocked = SIN_MOTIVO_BLOCKED;
 	nuevo_pcb->motivo_exit = SIN_MOTIVO_EXIT;

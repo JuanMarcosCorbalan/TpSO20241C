@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
 
 	iniciar_conexiones();
 
-	iniciar_interfaces(argv[0]);
+	iniciar_interfaces(argv[2]);
 
 	return 0;
 }

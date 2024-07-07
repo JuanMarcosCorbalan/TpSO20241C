@@ -72,11 +72,11 @@ void desbloquear_proceso_recurso(char* nombre) {
 		t_pcb* aux_proceso = list_remove(recurso->solicitud, 0);
 		remover_pcb(aux_proceso, aux_proceso->estado);
 
-		if(strcmp(app_config->algoritmo_planificacion, "VRR") && aux_proceso->quantum_ejecutados <= app_config->quantum && aux_proceso->quantum_ejecutados > 1) {
+		if(strcmp(app_config->algoritmo_planificacion, "VRR") == 0 && aux_proceso->quantum_ejecutados <= app_config->quantum && aux_proceso->quantum_ejecutados > 0) {
 			agregar_pcb(aux_proceso, V_READY);
 		}
 		else {
-			agregar_pcb(aux_proceso, READY);
+		agregar_pcb(aux_proceso, READY);
 		}
 
 		sem_post(&sem_lista_ready);
