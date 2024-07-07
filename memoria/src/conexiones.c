@@ -21,6 +21,7 @@ void operar(int *socket_cliente) {
 		dt_rw_memoria* rw_memoria;
 		dt_copy_string* copy_string;
 		char* valor_lectura;
+		dt_rw_fs* rw_fs;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
@@ -97,7 +98,35 @@ void operar(int *socket_cliente) {
 				usleep(app_config->retardo_respuesta * 1000);
 				request_status_copy_string(*socket_cliente, estado_escritura);
 				break;
+			case MSG_IO_FS_READ:
+
+				rw_fs = deserializar_rw_fs(paquete->buffer);
+
+				estado_escritura = escritura_memoria(rw_memoria->pid, rw_memoria->direccion_fisica, rw_memoria->tamanio_read_write, stream_rw);
+				sleep(app_config->retardo_respuesta);
+
+				//Si el FS quiere saber si se pudo escribir o no, puede usar la misma función que en MSG_IO_STDIN_READ
+				//request_status_escritura_memoria(*socket_cliente, estado_escritura);
+				//Si lo hace, desde FS tiene que llamar a deserializar_status_escritura_memoria()
+
+				break;
+			case MSG_IO_FS_WRITE:
+
+				rw_fs = deserializar_rw_fs(paquete->buffer);
+
+				//Leo de la memoria
+				stream_rw = lectura_memoria(rw_memoria->pid, rw_fs->direccion_fisica, rw_fs->tamanio_lectura);
+
+				valor_lectura = malloc(rw_fs->tamanio_lectura);
+				memcpy(valor_lectura,stream_rw,rw_fs->tamanio_lectura);
+				sleep(app_config->retardo_respuesta);
+				//Le envío el valor leido al FS
+				request_valor_fs_lectura(*socket_cliente,valor_lectura);
+				free(valor_lectura);
+				break;
+
 			default:
+
 				break;
 		}
 
@@ -118,6 +147,9 @@ void operar(int *socket_cliente) {
 				free(rw_memoria->valor_std);
 				free(rw_memoria);
 				break;
+			case MSG_IO_FS_READ:
+			case MSG_IO_FS_WRITE:
+				rw_fs(rw_fs);
 			default:
 				break;
 		}

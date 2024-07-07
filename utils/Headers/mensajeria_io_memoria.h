@@ -35,6 +35,7 @@ void request_status_escritura_memoria(int socket, uint32_t estado);
 uint32_t deserializar_status_escritura_memoria(int socket);
 char* deserializar_resultado_lectura_memoria(int socket);
 
+
 void request_fs_lectura(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio_lectura);
 void request_fs_escritura(int socket, uint32_t pid, uint32_t direccion_fisica, char* valor);
 dt_rw_fs* deserializar_rw_fs(t_buffer* buffer);
