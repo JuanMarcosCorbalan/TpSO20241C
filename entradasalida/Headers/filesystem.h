@@ -19,32 +19,15 @@ extern t_list* lista_metadata;
 extern char* path_metadata;
 extern char* path_bitarray;
 extern char* path_bloques;
-extern void* bitarray_mem;
+extern t_bitarray* bitarray_mem;
 extern size_t tamanio_bitarray;
 
 //extern sem_t sem_conexiones;
 //extern int socket_kernel;
 //extern int socket_memoria;
 
-/*
+
 void iniciar_filesystem();
-
-void truncate();
-
-void validacion_espacios_contiguos_vacios();
-
-
-
-void guardar_datos_de_archivo();
-
-void realocar_archivo_en_bitmap();
-
-void realocar_archivo_en_bloques();
-
-void modificar_bloque_inicial_metadata();
-
-
-*/
 
 typedef struct t_metadata {
 	char* nombre;
@@ -54,13 +37,13 @@ typedef struct t_metadata {
 } t_metadata;
 
 
-void create(char* nombre, char* path);
+void create(int pid, char* nombre);
 
-void delete(char* nombre, char* path);
+void delete(int pid, char* nombre);
 
-void truncar(char* nombre, int nuevo_tamanio);
+void truncar(int pid, char* nombre, int nuevo_tamanio);
 
-void extender_tamanio_archivo(t_metadata* metadata, int bloque_final, int *nuevo_bloque_final, int nuevo_tamanio);
+void extender_tamanio_archivo(int pid, t_metadata* metadata, int bloque_final, int *nuevo_bloque_final, int nuevo_tamanio);
 
 int buscar_primer_bloque_bitmap_libre();
 
@@ -89,24 +72,24 @@ void mover_archivo_en_binario();
 void* copiar_y_remover(t_metadata* metadata);
 int pegar_y_reubicar(t_metadata* metadata,void* info_binario, int bloque);
 
-int hay_bloques_contiguos_disponibles(int cantidad_bloques);
+int hay_bloques_contiguos_disponibles(int ultimo_bloque_archivo, int cantidad_bloques);
 
 t_metadata* extraer_de_lista(t_metadata* metadata);
 
-void compactacion(t_metadata* metadata);
+void compactacion(int pid, char* nombre_metadata_a_truncar);
 
 void* leer_bloques(int tamanio_a_leer, int bloque_inicial);
 int escribir_bloques(int tamanio_a_escribir, int bloque_inicial, int bloque_final, void* info_binario);
 
-void write_fs(char* nombre, int tamanio, int puntero, void* info_a_escribir);
-void* read_fs(char* nombre, int tamanio, int puntero);
+void write_fs(int pid, char* nombre, int tamanio, int puntero, void* info_a_escribir);
+void* read_fs(int pid, char* nombre, int tamanio, int puntero);
 
 
 char* crear_path_bitarray();
 char* crear_path_bloques();
 char* crear_path_metadata(char* nombre_metadata);
 
-void iniciar_bitmap(int tamanio_bitarray);
+void iniciar_bitmap(size_t tamanio_bitarray);
 
 void leer_archivos_existentes();
 

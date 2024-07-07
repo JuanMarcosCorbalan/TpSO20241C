@@ -13,6 +13,7 @@
 #include <readline/readline.h>
 #include <commons/string.h>
 #include "../../utils/Headers/mensajeria_io_memoria.h"
+#include "filesystem.h"
 
 extern t_io_config* app_config;
 extern int socket_kernel;

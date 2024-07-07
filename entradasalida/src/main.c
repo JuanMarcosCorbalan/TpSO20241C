@@ -5,9 +5,12 @@ int main(int argc, char *argv[]) {
 
 	iniciar_log("app.log");
 
-	iniciar_conexiones();
+	//iniciar_conexiones();
 
-	iniciar_interfaces(argv[0]);
+	//iniciar_interfaces(argv[0]);
 
+	if(!strcmp(app_config->tipo_infertaz, "DIALFS")){
+		iniciar_filesystem();
+	}
 	return 0;
 }
