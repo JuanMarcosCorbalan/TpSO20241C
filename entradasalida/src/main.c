@@ -9,5 +9,8 @@ int main(int argc, char *argv[]) {
 
 	iniciar_interfaces(argv[2]);
 
+	if(!strcmp(app_config->tipo_infertaz, "DIALFS")){
+		iniciar_filesystem();
+	}
 	return 0;
 }

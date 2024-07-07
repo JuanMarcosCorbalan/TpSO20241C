@@ -110,25 +110,32 @@ void operar_kernel() {
 			case MSG_IO_FS_CREATE:
 				fs_name = deserializar_iniciar_archivo(paquete->buffer);
 				// OPERAS CREATE
+				create(fs_name->pid, fs_name->nombre_archivo);
 				free(fs_name->nombre_archivo);
 				free(fs_name);
 				break;
 			case MSG_IO_FS_DELETE:
 				fs_name = deserializar_borrar_archivo(paquete->buffer);
 				// OPERAS DELETE
+				delete(fs_name->pid, fs_name->nombre_archivo);
 				free(fs_name->nombre_archivo);
 				free(fs_name);
 				break;
 			case MSG_IO_FS_TRUNCATE:
 				fs_truncate = deserializar_truncate_archivo(paquete->buffer);
 				// OPERAS TRUNCATE
+				// falta campo pid
+				//truncar(fs_truncate->pid, fs_truncate->fs_name, fs_truncate->tamanio);
 				free(fs_truncate->fs_name->nombre_archivo);
 				free(fs_truncate->fs_name);
 				free(fs_truncate);
 				break;
 			case MSG_IO_FS_READ:
 				fs_rw = deserializar_fs_rw(paquete->buffer);
-				valor_escritura = ""; // OPERAR READ PARA OBTENER DEL ARCHIVO EL VALOR DESEADO
+
+				valor_escritura = "";
+				// falta campo pid
+				//read_fs(fs_rw->pid, fs_rw->fs_name, fs_rw->registro_tamanio, fs_rw->registro_puntero_archivo); // OPERAR READ PARA OBTENER DEL ARCHIVO EL VALOR DESEADO
 				request_fs_escritura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, valor_escritura);
 				free(valor_escritura);
 				free(fs_rw->fs_name->nombre_archivo);
@@ -140,6 +147,8 @@ void operar_kernel() {
 				request_fs_lectura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, fs_rw->registro_tamanio);
 				valor_escritura = deserializar_valor_fs_lectura(socket_memoria);
 				// OPERAR WRITE
+				// falta campo pid
+				//write_fs(fs_rw->pid, fs_rw->fs_name, fs_rw->registro_tamanio, fs_rw->registro_puntero_archivo, valor_escritura);
 				free(valor_escritura);
 				free(fs_rw->fs_name->nombre_archivo);
 				free(fs_rw->fs_name);
