@@ -79,7 +79,7 @@ t_metadata* extraer_de_lista(t_metadata* metadata);
 void compactacion(int pid, char* nombre_metadata_a_truncar);
 
 void* leer_bloques(int tamanio_a_leer, int bloque_inicial);
-int escribir_bloques(int tamanio_a_escribir, int bloque_inicial, int bloque_final, void* info_binario);
+void escribir_bloques(int tamanio_a_escribir, int bloque_inicial, int bloque_final, void* info_binario);
 
 void write_fs(int pid, char* nombre, int tamanio, int puntero, void* info_a_escribir);
 void* read_fs(int pid, char* nombre, int tamanio, int puntero);
