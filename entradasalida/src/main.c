@@ -7,10 +7,11 @@ int main(int argc, char *argv[]) {
 
 	iniciar_conexiones();
 
-	iniciar_interfaces(argv[2]);
-
 	if(!strcmp(app_config->tipo_infertaz, "DIALFS")){
 		iniciar_filesystem();
 	}
+
+	iniciar_interfaces(argv[2]);
+
 	return 0;
 }

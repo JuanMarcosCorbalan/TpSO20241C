@@ -11,6 +11,7 @@ void iniciar_filesystem(){
 	path_bloques = crear_path_bloques();
 
 	archivo_bloques = fopen(path_bloques, "rb");
+
 	if(archivo_bloques==NULL) {
 		archivo_bloques = fopen(path_bloques, "wb+");
 		char* bloque[app_config->block_size];
@@ -18,33 +19,13 @@ void iniciar_filesystem(){
 		for(int i = 0; i<app_config->block_count; i++){
 			fwrite(bloque, 1, app_config->block_size, archivo_bloques);
 		}
-		fclose(archivo_bloques);
-
 	}
 
 	lista_metadata = list_create();
 	// busca fcbs existentes
 	leer_archivos_existentes();
 
-
 	iniciar_bitmap(tamanio_bitarray);
-
-	// para pruebas
-//	create("pepito.txt");
-//	create("pepitoremastered.txt");
-//	create("pepitoremastered2_0.txt");
-//	create("bastapepito.txt");
-//	create("ahorasibasta.txt");
-//	delete("pepitoremastered.txt");
-//	delete("bastapepito.txt");
-
-	// aca tiene que compactar
-//	truncar("pepitoremastered2_0.txt", 192);
-
-	// ahora quiero escribir algo en la posicion inicial de este archivo
-//	write_fs("pepitoremastered2_0.txt", 192, 0, "hola como estas");
-//	char* lectura = read_fs("pepitoremastered2_0.txt", 128, 0);
-//	log_info(app_log, "se leyo: %s", lectura);
 
 	fclose(archivo_bloques);
 }
@@ -306,7 +287,7 @@ void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nue
 	config_save(metadata_config);
 	config_destroy(metadata_config);
 	free(path);
-	free(metadata_config);
+//	free(metadata_config);
 }
 
 
