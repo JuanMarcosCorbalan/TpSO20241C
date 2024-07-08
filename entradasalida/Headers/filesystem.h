@@ -43,7 +43,7 @@ void delete(int pid, char* nombre);
 
 void truncar(int pid, char* nombre, int nuevo_tamanio);
 
-void extender_tamanio_archivo(int pid, t_metadata* metadata, int bloque_final, int *nuevo_bloque_final, int nuevo_tamanio);
+int extender_tamanio_archivo(int pid, t_metadata* metadata, int bloque_final, int *nuevo_bloque_final, int nuevo_tamanio);
 
 int buscar_primer_bloque_bitmap_libre();
 
