@@ -393,7 +393,7 @@ void compactacion(int pid, char* nombre_metadata_a_truncar){
 // aca reescribo leer bloques y escribir bloques pero pasandole el puntero por parametro
 void write_fs(int pid, char* nombre, int tamanio, int puntero, void* info_a_escribir){
 	t_metadata* metadata = buscar_metadata_lista_por_nombre(nombre);
-	FILE* archivo_bloques = fopen(path_bloques, "wb+");
+	FILE* archivo_bloques = fopen(path_bloques, "rb+");
 	// el puntero es relativo del archivo.
 	fseek(archivo_bloques, (metadata->bloque_inicial * app_config->block_size) + puntero, SEEK_SET);
 	fwrite(info_a_escribir, tamanio, 1, archivo_bloques);
@@ -410,7 +410,6 @@ void* read_fs(int pid, char* nombre, int tamanio, int puntero){
 	fread(info_leida, tamanio, 1, archivo_bloques);
 	fclose(archivo_bloques);
 	log_info(app_log, "PID: %d - Leer Archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", pid, nombre, tamanio, puntero);
-	free(metadata);
 	return info_leida;
 }
 
