@@ -72,8 +72,6 @@ void mover_archivo_en_binario();
 void* copiar_y_remover(t_metadata* metadata);
 int pegar_y_reubicar(t_metadata* metadata,void* info_binario, int bloque);
 
-int hay_bloques_contiguos_disponibles(int ultimo_bloque_archivo, int cantidad_bloques);
-
 t_metadata* extraer_de_lista(t_metadata* metadata);
 
 void compactacion(int pid, char* nombre_metadata_a_truncar);
@@ -85,8 +83,7 @@ void write_fs(int pid, char* nombre, int tamanio, int puntero, void* info_a_escr
 void* read_fs(int pid, char* nombre, int tamanio, int puntero);
 
 
-char* crear_path_bitarray();
-char* crear_path_bloques();
+char* crear_path_dat(char* nombre_dat);
 char* crear_path_metadata(char* nombre_metadata);
 
 void iniciar_bitmap(size_t tamanio_bitarray);

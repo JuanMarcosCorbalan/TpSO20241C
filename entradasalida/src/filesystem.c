@@ -1,62 +1,11 @@
 #include "../Headers/filesystem.h"
 
-void iniciar_filesystem(){
-	FILE* archivo_bloques ;
-
-	tamanio_bitarray = app_config->block_count/8; //bits/8 -> tamanio en bytes
-
-	path_bitarray = crear_path_bitarray();
-
-	// abro el archivo de bloques o lo crea si no existe
-	path_bloques = crear_path_bloques();
-
-	archivo_bloques = fopen(path_bloques, "rb");
-
-	if(archivo_bloques==NULL) {
-		archivo_bloques = fopen(path_bloques, "wb+");
-		char* bloque[app_config->block_size];
-		memset(bloque, 0, app_config->block_size);
-		for(int i = 0; i<app_config->block_count; i++){
-			fwrite(bloque, 1, app_config->block_size, archivo_bloques);
-		}
-	}
-
-	lista_metadata = list_create();
-	// busca fcbs existentes
-	leer_archivos_existentes();
-
-	iniciar_bitmap(tamanio_bitarray);
-
-	fclose(archivo_bloques);
-}
-
-void iniciar_bitmap(size_t tamanio_bitarray){
-
-	FILE* archivo_bitarray = fopen(path_bitarray, "rb+");
-	void* puntero_bitmap;
-	if(archivo_bitarray) {
-		// el archivo existe, mapea el contenido
-		puntero_bitmap = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
-		if (puntero_bitmap == MAP_FAILED) {
-			perror("Error al mapear el archivo de bitarray");
-			fclose(archivo_bitarray);
-		return;
-		}
-		bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
-	} else {
-		// si el archivo es nuevo
-		archivo_bitarray = fopen(path_bitarray, "wb+");
-		fflush(archivo_bitarray);
-		ftruncate(fileno(archivo_bitarray), tamanio_bitarray);
-		puntero_bitmap = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
-		memset(puntero_bitmap, 0, tamanio_bitarray);
-		bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
-	}
-
-
-	msync(bitarray_mem->bitarray, tamanio_bitarray, MS_SYNC);
-
-	fclose(archivo_bitarray);
+char* crear_path_dat(char* nombre_dat){
+	char* path_bloques_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen(nombre_dat) + 1);
+	memcpy(path_bloques_nuevo, app_config->path_base_dialfs, strlen(app_config->path_base_dialfs));
+	memcpy(path_bloques_nuevo + strlen(app_config->path_base_dialfs), "/", 1);
+	memcpy(path_bloques_nuevo + strlen(app_config->path_base_dialfs) + 1, nombre_dat, strlen(nombre_dat) + 1);
+	return(path_bloques_nuevo);
 }
 
 void leer_archivos_existentes(){
@@ -89,15 +38,65 @@ void leer_archivos_existentes(){
 
     	}
     	closedir(d);
-    } else {
+    }
+    else {
     	log_info(app_log, "No se pudo abrir el directorio");
     }
+    free(path_metadatas);
 }
-/*
- * IO_FS_CREATE (Interfaz, Nombre Archivo): Esta instrucción solicita al Kernel que mediante la interfaz seleccionada,
- * se cree un archivo en el FS montado en dicha interfaz.
- *
- */
+
+void iniciar_filesystem(){
+	tamanio_bitarray = app_config->block_count / 8;
+	path_bitarray = crear_path_dat("bitarray.dat");
+	path_bloques = crear_path_dat("bloques.dat");
+
+	FILE* archivo_bloques = fopen(path_bloques, "rb");
+
+	if(archivo_bloques == NULL) {
+		archivo_bloques = fopen(path_bloques, "wb+");
+		char* bloque[app_config->block_size];
+		memset(bloque, 0, app_config->block_size);
+
+		for(int i = 0; i<app_config->block_count; i++){
+			fwrite(bloque, 1, app_config->block_size, archivo_bloques);
+		}
+	}
+
+	lista_metadata = list_create();
+	leer_archivos_existentes();
+	iniciar_bitmap(tamanio_bitarray);
+	fclose(archivo_bloques);
+}
+
+void iniciar_bitmap(size_t tamanio_bitarray){
+
+	FILE* archivo_bitarray = fopen(path_bitarray, "rb+");
+	void* puntero_bitmap;
+	if(archivo_bitarray) {
+		// el archivo existe, mapea el contenido
+		puntero_bitmap = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
+		if (puntero_bitmap == MAP_FAILED) {
+			perror("Error al mapear el archivo de bitarray");
+			fclose(archivo_bitarray);
+		return;
+		}
+		bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
+	} else {
+		// si el archivo es nuevo
+		archivo_bitarray = fopen(path_bitarray, "wb+");
+		fflush(archivo_bitarray);
+		ftruncate(fileno(archivo_bitarray), tamanio_bitarray);
+		puntero_bitmap = mmap(NULL, tamanio_bitarray, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(archivo_bitarray), 0);
+		memset(puntero_bitmap, 0, tamanio_bitarray);
+		bitarray_mem = bitarray_create_with_mode(puntero_bitmap, tamanio_bitarray, LSB_FIRST);
+	}
+
+
+	msync(bitarray_mem->bitarray, tamanio_bitarray, MS_SYNC);
+
+	fclose(archivo_bitarray);
+}
+
 char* crear_path_metadata(char* nombre_metadata){
 	char* path_metadata_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/fcbs/") + strlen(nombre_metadata) + 1);
 	strcpy(path_metadata_nuevo, app_config->path_base_dialfs);
@@ -106,21 +105,17 @@ char* crear_path_metadata(char* nombre_metadata){
 	return path_metadata_nuevo;
 }
 
-char* crear_path_bitarray(){
-	char* path_bitarray_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bitarray.dat") + 1);
-	strcpy(path_bitarray_nuevo, app_config->path_base_dialfs);
-	strcat(path_bitarray_nuevo, "/");
-	strcat(path_bitarray_nuevo, "bitarray.dat");
-	return path_bitarray_nuevo;
+int existen_bloques_contiguos_disponibles(int ultimo_bloque_archivo, int bloques_necesarios) {
+	int ultimo_bloque_nuevo = ultimo_bloque_archivo + bloques_necesarios;
+
+	for(int i = ultimo_bloque_archivo + 1; i<= ultimo_bloque_nuevo; i++) {
+		if(bitarray_test_bit(bitarray_mem, i) == 1)
+			return 0;
+	}
+
+	return 1;
 }
 
-char* crear_path_bloques(){
-	char* path_bloques_nuevo = malloc(strlen(app_config->path_base_dialfs) + strlen("/") + strlen("bloques.dat") + 1);
-	strcpy(path_bloques_nuevo, app_config->path_base_dialfs);
-	strcat(path_bloques_nuevo, "/");
-	strcat(path_bloques_nuevo, "bloques.dat");
-	return(path_bloques_nuevo);
-}
 void create(int pid, char* nombre){
 
 	int primer_bloque = buscar_primer_bloque_bitmap_libre();
@@ -164,37 +159,40 @@ void truncar(int pid, char* nombre, int nuevo_tamanio){
 	if(metadata->tamanio%app_config->block_size){
 		bloques_asignados_actual += 1;
 	}
+
 	int cantidad_bloques_nueva = nuevo_tamanio/app_config->block_size;
 	if(nuevo_tamanio%app_config->block_size){
 		cantidad_bloques_nueva += 1;
 	}
+
 	int nuevo_bloque_final = bloque_inicial + cantidad_bloques_nueva - 1;
 
-
-
-	if(cantidad_bloques_nueva > bloques_asignados_actual){
+	if(cantidad_bloques_nueva > bloques_asignados_actual) {
 		nuevo_bloque_final = extender_tamanio_archivo(pid, metadata, bloque_final, &nuevo_bloque_final, nuevo_tamanio);
-	} else if(cantidad_bloques_nueva < bloques_asignados_actual){
+	}
+	else if(cantidad_bloques_nueva < bloques_asignados_actual) {
 		desocupar_bloques_bitmap(nuevo_bloque_final + 1, bloque_final);
 	}
-	// actualizar metadata lista, actualizar .config
+
 	if(nuevo_bloque_final < bloque_final){
 		nuevo_bloque_final = 0;
 	}
+
 	actualizar_metadata(metadata, metadata->bloque_inicial, nuevo_bloque_final, cantidad_bloques_nueva * app_config->block_size);
 	log_info(app_log, "PID: %d - Truncar Archivo: %s - Tamaño: %d ",pid , nombre, cantidad_bloques_nueva * app_config->block_size);
-
 }
 
 int extender_tamanio_archivo(int pid, t_metadata* metadata, int bloque_final, int* nuevo_bloque_final, int nuevo_tamanio){
 	int nuevo_bloque_final_int = *nuevo_bloque_final;
-	if(hay_bloques_contiguos_disponibles(bloque_final ,nuevo_bloque_final_int - bloque_final) < 0){
+
+	if(existen_bloques_contiguos_disponibles(bloque_final ,nuevo_bloque_final_int - bloque_final) == 0){
 		compactacion(pid, metadata->nombre);
 		nuevo_bloque_final_int = metadata->bloque_inicial + nuevo_tamanio/app_config->block_size -1;
 		if(nuevo_tamanio%app_config->block_size){
 			nuevo_bloque_final_int += 1;
 		}
 	}
+
 	bloque_final = metadata->bloque_final;
 	ocupar_bloques_bitmap(bloque_final+1, nuevo_bloque_final_int);
 	return nuevo_bloque_final_int;
@@ -359,36 +357,6 @@ void* leer_bloques(int tamanio, int bloque_inicial){
 	fclose(archivo_bloques);
 	return buffer_leido;
 }
-
-int hay_bloques_contiguos_disponibles(int ultimo_bloque_archivo, int cant_bloques){
-    int bitarray_length = bitarray_get_max_bit(bitarray_mem);
-    int pos = ultimo_bloque_archivo + 1;
-    int bloque_libre_inicial = 0;
-    int bloques_libres_contiguos = 0;
-
-    while(pos < bitarray_length && bloques_libres_contiguos < cant_bloques){
-    	bloques_libres_contiguos = 0;
-        bloque_libre_inicial = pos;
-
-        if(bitarray_test_bit(bitarray_mem, pos)){
-        	return -1;
-        } else {
-        	while(!bitarray_test_bit(bitarray_mem, pos)){
-        		bloques_libres_contiguos ++;
-        		pos ++;
-        	}
-
-        }
-    }
-    if(bloques_libres_contiguos >= cant_bloques){
-    	return bloque_libre_inicial;
-    } else {
-    	return -1;
-    }
-
-
-}
-
 
 void compactacion(int pid, char* nombre_metadata_a_truncar){
 	log_info(app_log, "PID: %d - Inicio Compactación", 1);

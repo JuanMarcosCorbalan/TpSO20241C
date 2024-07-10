@@ -101,7 +101,7 @@ void operar(int *socket_cliente) {
 			case MSG_IO_FS_READ:
 				rw_fs = deserializar_rw_fs(paquete->buffer);
 				estado_escritura = escritura_memoria(rw_fs->pid, rw_fs->direccion_fisica, rw_fs->tamanio_lectura, stream_rw);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_status_escritura_memoria(*socket_cliente, estado_escritura);
 				break;
 			case MSG_IO_FS_WRITE:
@@ -109,7 +109,7 @@ void operar(int *socket_cliente) {
 				stream_rw = lectura_memoria(rw_fs->pid, rw_fs->direccion_fisica, rw_fs->tamanio_lectura);
 				valor_lectura = malloc(rw_fs->tamanio_lectura);
 				memcpy(valor_lectura, stream_rw, rw_fs->tamanio_lectura);
-				sleep(app_config->retardo_respuesta);
+				usleep(app_config->retardo_respuesta * 1000);
 				request_valor_fs_lectura(*socket_cliente, valor_lectura);
 				free(valor_lectura);
 				break;
