@@ -359,6 +359,12 @@ void ejecutar_proceso(t_pcb* proceso) {
 		case MSG_FINALIZAR_PROCESO:
 			free(contexto_proceso);
 			break;
+		case MSG_SIGNAL_RECURSO:
+		case MSG_WAIT_RECURSO:
+			free(recurso_proceso->contexto_proceso);
+			free(recurso_proceso->nombre_recurso);
+			free(recurso_proceso);
+			break;
 		case MSG_IO_GEN_SLEEP:
 			free(sleep_proceso->nombre_interfaz);
 			free(sleep_proceso->contexto_proceso);

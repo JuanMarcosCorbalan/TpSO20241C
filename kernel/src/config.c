@@ -18,7 +18,7 @@ void cargar_config(char* path) {
 	char* recursos = config_get_string_value(app_config_file, "RECURSOS");
 	char* recursos_init = string_replace(recursos, "[", "");
 	char* recursos_fin = string_replace(recursos_init, "]", "");
-	char** list_recursos = string_split(recursos, ",");
+	char** list_recursos = string_split(recursos_fin, ",");
 
 	free(recursos);
 	free(recursos_init);
