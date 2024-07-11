@@ -33,6 +33,10 @@ void finalizar_por_consola(uint32_t pid) {
 	if(proceso->estado == EXEC) {
 		request_interrumpir_proceso_exit(socket_cpu_interrupt, pid, SUCCESS_CONSOLA);
 	}
+
+	else if(proceso->estado == _EXIT)
+		return;
+
 	else {
 		remover_pcb(proceso, proceso->estado);
 
