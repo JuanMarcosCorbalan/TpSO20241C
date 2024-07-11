@@ -370,6 +370,12 @@ void ejecutar_proceso(t_pcb* proceso) {
 			free(sleep_proceso->contexto_proceso);
 			free(sleep_proceso);
 			break;
+		case MSG_IO_STDIN_READ:
+		case MSG_IO_STDOUT_WRITE:
+			free(std->contexto_proceso);
+			free(std->nombre_interfaz);
+			free(std);
+			break;
 		default:
 			break;
 		}
