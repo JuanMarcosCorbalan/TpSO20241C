@@ -90,4 +90,6 @@ void iniciar_bitmap(size_t tamanio_bitarray);
 
 void leer_archivos_existentes();
 
+void finalizar_estructuras();
+
 #endif /* HEADERS_FILESYSTEM_H_ */
