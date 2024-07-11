@@ -20,5 +20,6 @@ uint8_t motivo_interrupt_bloqueo;
 uint8_t motivo_interrupt_exit;
 t_list* lista_tlb;
 t_temporal* rafaga_quantum;
+t_config* archivo_config;
 
 #endif /* HEADERS_MAIN_H_ */

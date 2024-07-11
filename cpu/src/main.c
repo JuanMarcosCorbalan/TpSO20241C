@@ -11,5 +11,9 @@ int main(int argc, char *argv[]) {
 
 	iniciar_conexiones();
 
+	finalizar_config();
+	config_destroy(archivo_config);
+	log_destroy(app_log);
+
 	return 0;
 }
