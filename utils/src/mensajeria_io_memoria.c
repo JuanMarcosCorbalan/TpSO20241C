@@ -131,80 +131,66 @@ char* deserializar_resultado_lectura_memoria(int socket) {
 }
 
 void request_fs_lectura(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio_lectura) {
-
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 	buffer->size = sizeof(uint32_t) * 4; 
-	
 	void* stream = malloc(buffer->size);
+
+	uint32_t tamanio_valor = 0;
 	int offset = 0;
 
 	memcpy(stream + offset, &pid, sizeof(uint32_t));
-	offset = offset + sizeof(uint32_t);
-
+	offset += sizeof(uint32_t);
 	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
-	offset = offset + sizeof(uint32_t);
-
+	offset += sizeof(uint32_t);
 	memcpy(stream + offset, &tamanio_lectura, sizeof(uint32_t));
-
-	// Copio el tamanio del valor como 0 para que no se use
-	offset = offset + sizeof(uint32_t);
-	uint32_t cero = 0;
-	memcpy(stream + offset,&cero,sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_valor, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
 
 	buffer->stream = stream;
 
 	send_paquete(buffer, MSG_IO_FS_WRITE, socket);
-
 }
 
 void request_fs_escritura(int socket, uint32_t pid, uint32_t direccion_fisica, char* valor){
-
 	t_buffer* buffer = malloc(sizeof(t_buffer));
-	uint32_t tamanio_escritura = strlen(valor) + 1;
-	buffer->size = sizeof(uint32_t) * 4 + tamanio_escritura;
-	
+	uint32_t tamanio_valor = strlen(valor);
+	uint32_t tamanio_lectura = 0;
+	buffer->size = sizeof(uint32_t) * 4 + tamanio_valor;
+
 	void* stream = malloc(buffer->size);
 	int offset = 0;
 
 	memcpy(stream + offset, &pid, sizeof(uint32_t));
-	offset = offset + sizeof(uint32_t);
-
+	offset += sizeof(uint32_t);
 	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
-	offset = offset + sizeof(uint32_t);
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_lectura, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_valor, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, valor, tamanio_valor);
+	offset += tamanio_valor;
 
-	//Copio un tamanio de lectura 0 para que no se use
-	int cero = 0;
-	memcpy(stream + offset, &cero, sizeof(uint32_t));
-	offset = offset + sizeof(uint32_t);
-	
-	// copio el tamanio del string a escribir
-	memcpy(stream + offset, &tamanio_escritura, sizeof(uint32_t));
-	offset = offset + sizeof(uint32_t);
-
-	// por ultimo copio el valor del string a escribir
-	memcpy(stream + offset, valor, tamanio_escritura);
-	
 	buffer->stream = stream;
 
 	send_paquete(buffer, MSG_IO_FS_READ, socket);
 }
 
 dt_rw_fs* deserializar_rw_fs(t_buffer* buffer){
-
 	dt_rw_fs* rw_fs = malloc(sizeof(dt_rw_fs));
 	void* stream = buffer->stream;
 
 	memcpy(&rw_fs->pid, stream, sizeof(uint32_t));
-	stream = stream + sizeof(uint32_t);
+	stream += sizeof(uint32_t);
 	memcpy(&rw_fs->direccion_fisica, stream, sizeof(uint32_t));
-	stream = stream + sizeof(uint32_t);
-		memcpy(&rw_fs->tamanio_lectura, stream, sizeof(uint32_t));
-	stream = stream + sizeof(uint32_t);
+	stream += sizeof(uint32_t);
+	memcpy(&rw_fs->tamanio_lectura, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
 	memcpy(&rw_fs->tamanio_valor, stream, sizeof(uint32_t));
-	stream = stream + sizeof(uint32_t);
+	stream += sizeof(uint32_t);
 
-	if(rw_fs->tamanio_valor>0){
-		//Si recibo un valor de escritura mayor a 0 entonces tengo un valor para escribir
+	if(rw_fs->tamanio_valor > 0){
 		rw_fs->valor = malloc(rw_fs->tamanio_valor);
 		memcpy(rw_fs->valor, stream , rw_fs->tamanio_valor);
 	}
