@@ -24,6 +24,16 @@ uint8_t obtener_algoritmo_planificacion() {
 		return VRR;
 }
 
+void finalizar_procesos() {
+	void fin(void* elem) {
+		t_pcb* pcb = elem;
+		free(pcb->path_instrucciones);
+		free(pcb->registros_cpu);
+		free(pcb);
+	}
+	list_destroy_and_destroy_elements(lista_global, fin);
+}
+
 t_registros_cpu* crear_registros_cpu() {
 	t_registros_cpu* nuevo_registros_cpu = malloc(sizeof(t_registros_cpu));
 

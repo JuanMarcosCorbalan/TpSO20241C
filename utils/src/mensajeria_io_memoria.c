@@ -226,6 +226,7 @@ char* deserializar_valor_fs_lectura(int socket) {
 	char * valor = malloc(tamanio_valor);
 	memcpy(valor,stream,tamanio_valor);
 
+	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
 

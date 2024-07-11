@@ -39,10 +39,12 @@ char* listar_procesos_ready() {
 	void append_pid(void* elem) {
 		contador_iteraciones++;
 		t_pcb* proceso = (t_pcb*) elem;
-		string_append_with_format(&procesos, "%s",string_itoa(proceso->pid));
+		char* pid = string_itoa(proceso->pid);
+		string_append_with_format(&procesos, "%s", pid);
 		if(contador_iteraciones < lista_ready->elements_count) {
 			string_append_with_format(&procesos, ",");
 		}
+		free(pid);
 	}
 	list_iterate(lista_ready, append_pid);
 	string_append(&procesos, "]");
@@ -61,10 +63,12 @@ char* listar_procesos_v_ready() {
 	void append_pid(void* elem) {
 		contador_iteraciones++;
 		t_pcb* proceso = (t_pcb*) elem;
-		string_append_with_format(&procesos, "%s",string_itoa(proceso->pid));
+		char* pid = string_itoa(proceso->pid);
+		string_append_with_format(&procesos, "%s", pid);
 		if(contador_iteraciones < lista_v_ready->elements_count) {
 			string_append_with_format(&procesos, ",");
 		}
+		free(pid);
 	}
 	list_iterate(lista_v_ready, append_pid);
 	string_append(&procesos, "]");

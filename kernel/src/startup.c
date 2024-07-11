@@ -32,3 +32,31 @@ void iniciar_estructuras() {
 	pthread_mutex_init(&mutex_ejecucion_proceso, NULL);
 	pthread_mutex_init(&mutex_planificador_largo_plazo, NULL);
 }
+
+void finalizar_estructuras() {
+	pthread_mutex_destroy(&mutex_lista_new);
+	pthread_mutex_destroy(&mutex_lista_ready);
+	pthread_mutex_destroy(&mutex_lista_v_ready);
+	pthread_mutex_destroy(&mutex_lista_exec);
+	pthread_mutex_destroy(&mutex_lista_blocked);
+	pthread_mutex_destroy(&mutex_lista_exit);
+	pthread_mutex_destroy(&mutex_lista_global);
+	pthread_mutex_destroy(&mutex_lista_interfaz);
+	pthread_mutex_destroy(&mutex_contador_pid);
+	pthread_mutex_destroy(&mutex_ejecucion_proceso);
+	pthread_mutex_destroy(&mutex_planificador_largo_plazo);
+
+	sem_destroy(&sem_lista_new);
+	sem_destroy(&sem_lista_ready);
+	sem_destroy(&sem_lista_exec);
+	sem_destroy(&sem_lista_blocked);
+	sem_destroy(&sem_grado_multiprogramacion);
+	sem_destroy(&sem_planificacion_pausada);
+
+	list_destroy(lista_new);
+	list_destroy(lista_ready);
+	list_destroy(lista_exec);
+	list_destroy(lista_blocked);
+	list_destroy(lista_exit);
+	list_destroy(lista_v_ready);
+}
