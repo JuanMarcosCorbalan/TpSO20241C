@@ -22,7 +22,9 @@ typedef struct t_kernel_config {
 } t_kernel_config;
 
 extern t_kernel_config* app_config;
+extern t_config* app_config_file;
 
 void cargar_config(char* path);
+void finalizar_config();
 
 #endif /* HEADERS_CONFIG_H_ */

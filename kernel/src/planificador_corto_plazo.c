@@ -361,6 +361,7 @@ void ejecutar_proceso(t_pcb* proceso) {
 			break;
 		case MSG_IO_GEN_SLEEP:
 			free(sleep_proceso->nombre_interfaz);
+			free(sleep_proceso->contexto_proceso);
 			free(sleep_proceso);
 			break;
 		default:
