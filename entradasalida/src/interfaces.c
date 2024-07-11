@@ -157,8 +157,8 @@ void operar_kernel() {
 				write_fs(fs_rw->fs_name->pid, fs_rw->fs_name->nombre_archivo, fs_rw->registro_tamanio, fs_rw->registro_puntero_archivo, void_escritura);
 				usleep(app_config->tiempo_unidad_trabajo * 1000);
 				request_desbloquear_proceso_io(socket_kernel, fs_rw->fs_name->pid);
-				free(valor_escritura);
 				free(void_escritura);
+				free(valor_escritura);
 				free(fs_rw->fs_name->nombre_archivo);
 				free(fs_rw->fs_name);
 				free(fs_rw);

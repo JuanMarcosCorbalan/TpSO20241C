@@ -15,7 +15,7 @@ void leer_archivos_existentes(){
     int bloque_final = 0;
     int tamanio = 0;
 
-    char* path_metadatas = malloc(strlen(app_config->path_base_dialfs) + strlen("/fcbs"));
+    char* path_metadatas = malloc(strlen(app_config->path_base_dialfs) + strlen("/fcbs") + 1);
     strcpy(path_metadatas, app_config->path_base_dialfs);
     strcat(path_metadatas, "/fcbs");
     d = opendir(path_metadatas);
@@ -33,6 +33,8 @@ void leer_archivos_existentes(){
     			tamanio = config_get_int_value(config_a_cargar, "TAMANIO_ARCHIVO");
     			bloque_final = bloque_inicial + (tamanio/app_config->block_size) - 1;
     			agregar_a_lista_metadata(dir->d_name, bloque_inicial, bloque_final, tamanio);
+
+    			config_destroy(config_a_cargar);
     			free(path_config_a_cargar);
     		}
 
@@ -146,6 +148,7 @@ void delete(int pid, char* nombre){
 
 	config_destroy(metadata);
 	remove(path);
+	free(path);
 	log_info(app_log, "PID: %d - Eliminar Archivo: %s", pid, nombre);
 }
 
@@ -235,6 +238,8 @@ void crear_metadata(char* nombre, int primer_bloque){
 
 	config_save_in_file(metadata, path);
 	config_destroy(metadata);
+	//CAMBIO
+	free(path);
 }
 
 t_config* leer_metadata(char* path){
@@ -300,6 +305,8 @@ void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nue
 
 	config_save(metadata_config);
 	config_destroy(metadata_config);
+	//CAMBIO
+	free(nombre_metadata);
 	free(path);
 //	free(metadata_config);
 }
@@ -348,6 +355,7 @@ void escribir_bloques(int tamanio, int bloque_inicial, int bloque_final, void* i
 	FILE* archivo_bloques = fopen(path_bloques, "rb+");
 	fseek(archivo_bloques, bloque_inicial * app_config->block_size, SEEK_SET);
 	fwrite(info_binario, tamanio, 1, archivo_bloques);
+	fclose(archivo_bloques);
 }
 void* leer_bloques(int tamanio, int bloque_inicial){
 	void* buffer_leido = malloc(tamanio);
@@ -376,7 +384,7 @@ void compactacion(int pid, char* nombre_metadata_a_truncar){
 		info = copiar_y_remover(metadata_aux);
 
 		ultimo_bloque_usado = pegar_y_reubicar(metadata_aux, info, primer_bloque_libre);
-
+		free(info);
 		actualizar_metadata(metadata_aux, primer_bloque_libre, ultimo_bloque_usado, metadata_aux->tamanio);
 
 		primer_bloque_libre = ultimo_bloque_usado + 1;
@@ -384,10 +392,10 @@ void compactacion(int pid, char* nombre_metadata_a_truncar){
 		primer_bloque_archivo = buscar_primer_archivo_desde(primer_bloque_libre);
 	}
 	ultimo_bloque_usado = pegar_y_reubicar(metadata, buffer_archivo_truncado, primer_bloque_libre);
+	free(buffer_archivo_truncado);
 	actualizar_metadata(metadata, primer_bloque_libre, ultimo_bloque_usado, metadata->tamanio);
 	log_info(app_log, "PID: %d - Fin Compactación", 1);
-	//sleep(app_config->retraso_compactacion/100);
-	//free(metadata_aux);
+	usleep(app_config->retraso_compactacion * 1000);
 }
 
 // aca reescribo leer bloques y escribir bloques pero pasandole el puntero por parametro
@@ -413,3 +421,16 @@ void* read_fs(int pid, char* nombre, int tamanio, int puntero){
 	return info_leida;
 }
 
+void finalizar_estructuras(){
+	void eliminar_metadata(void* elem){
+		t_metadata* metadata = (t_metadata*) elem;
+		//list_remove_element(lista_metadata, metadata);
+		free(metadata->nombre);
+		free(metadata);
+	}
+	list_destroy_and_destroy_elements(lista_metadata, eliminar_metadata);
+
+	free(path_bloques);
+	free(path_bitarray);
+	free(bitarray_mem);
+}

@@ -16,10 +16,13 @@ typedef struct t_io_config {
 	int puerto_memoria;
 	int block_size;
 	int block_count;
+	int retraso_compactacion;
 } t_io_config;
 
 extern t_io_config* app_config;
+extern t_config* archivo_config;
 
 void cargar_config(char* path);
+void finalizar_config();
 
 #endif /* HEADERS_CONFIG_H_ */

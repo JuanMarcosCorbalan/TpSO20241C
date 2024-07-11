@@ -10,6 +10,7 @@
 #include "filesystem.h"
 
 t_io_config* app_config;
+t_config* archivo_config;
 t_log* app_log;
 sem_t sem_conexiones;
 int socket_kernel;
