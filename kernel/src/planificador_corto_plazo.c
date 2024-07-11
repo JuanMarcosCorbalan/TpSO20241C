@@ -355,6 +355,26 @@ void ejecutar_proceso(t_pcb* proceso) {
 		}
 
 		switch(paquete->codigo_operacion) {
+		case MSG_IO_FS_WRITE:
+		case MSG_IO_FS_READ:
+			free(io_file_rw->contexto_proceso);
+			free(io_file_rw->nombre_archivo);
+			free(io_file_rw->nombre_interfaz);
+			free(io_file_rw);
+			break;
+		case MSG_IO_FS_TRUNCATE:
+			free(io_file_truncate->contexto_proceso);
+			free(io_file_truncate->nombre_archivo);
+			free(io_file_truncate->nombre_interfaz);
+			free(io_file_truncate);
+			break;
+		case MSG_IO_FS_DELETE:
+		case MSG_IO_FS_CREATE:
+			free(io_file->contexto_proceso);
+			free(io_file->nombre_archivo);
+			free(io_file->nombre_interfaz);
+			free(io_file);
+			break;
 		case MSG_DESALOJO:
 		case MSG_FINALIZAR_PROCESO:
 			free(contexto_proceso);
