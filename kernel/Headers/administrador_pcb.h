@@ -33,6 +33,7 @@ extern pthread_mutex_t mutex_lista_blocked;
 extern pthread_mutex_t mutex_lista_exit;
 extern pthread_mutex_t mutex_lista_global;
 
+void finalizar_procesos();
 t_pcb* crear_pcb(char* path_instrucciones);
 t_pcb* obtener_pcb_por_id(int pid);
 void remover_pcb(t_pcb* proceso, uint8_t estado);

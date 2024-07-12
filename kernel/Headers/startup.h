@@ -38,5 +38,6 @@ extern pthread_mutex_t mutex_lista_interfaz;
 extern pthread_mutex_t mutex_planificador_largo_plazo;
 
 void iniciar_estructuras();
+void finalizar_estructuras();
 
 #endif /* HEADERS_STARTUP_H_ */

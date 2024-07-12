@@ -9,10 +9,12 @@ void listar_procesos(t_list* lista, char* estado) {
 	void append_pid(void* elem) {
 		contador_iteraciones++;
 		t_pcb* proceso = (t_pcb*) elem;
-		string_append_with_format(&procesos, "%s",string_itoa(proceso->pid));
+		char* pid = string_itoa(proceso->pid);
+		string_append_with_format(&procesos, "%s", pid);
 		if(contador_iteraciones < lista->elements_count) {
 			string_append_with_format(&procesos, ",");
 		}
+		free(pid);
 	}
 	list_iterate(lista, append_pid);
 	string_append(&procesos, "]");
@@ -55,6 +57,8 @@ uint8_t obtener_tipo_operachion(char* operacion) {
 		return INICIAR_PLANIFICACION;
 	else if(strcmp(operacion, "PROCESO_ESTADO") == 0)
 		return PROCESO_ESTADO;
+	else if(strcmp(operacion, "FINALIZAR") == 0)
+		return FINALIZAR;
 	else
 		return OPERACION_INCORRECTA;
 }
@@ -195,6 +199,9 @@ void iniciar_consola() {
 
 		if(tipo_operacion == EJECUTAR_SCRIPT)
 			ejecutar_script(parametros[1]);
+
+		else if(tipo_operacion == FINALIZAR)
+			continuar = 0;
 
 		else
 			ejecutar_instruccion(tipo_operacion, parametros[1]);

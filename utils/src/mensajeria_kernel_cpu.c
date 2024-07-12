@@ -553,6 +553,10 @@ uint32_t deserializar_desbloquear_cpu(int socket) {
 
 	memcpy(&pid, stream, sizeof(uint32_t));
 
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
 	return pid;
 }
 

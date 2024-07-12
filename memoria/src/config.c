@@ -1,7 +1,7 @@
 #include "../Headers/config.h"
 
 void cargar_config(char* path) {
-	t_config* archivo_config = config_create(path);
+	archivo_config = config_create(path);
 	app_config = malloc(sizeof(t_memoria_config));
 
 	app_config->path_instrucciones = config_get_string_value(archivo_config, "PATH_INSTRUCCIONES");

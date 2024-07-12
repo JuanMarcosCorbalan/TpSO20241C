@@ -13,6 +13,7 @@
 
 t_kernel_config* app_config;
 t_log* app_log;
+t_config* app_config_file;
 
 int socket_cpu_dispatch;
 int socket_cpu_interrupt;

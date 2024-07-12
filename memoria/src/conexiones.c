@@ -64,6 +64,7 @@ void operar(int *socket_cliente) {
 				memcpy(&valor_registro, stream_rw, sizeof(uint32_t));
 				usleep(app_config->retardo_respuesta * 1000);
 				request_valor_mov_in(*socket_cliente, valor_registro);
+				free(stream_rw);
 				break;
 			case MSG_MOV_OUT:
 				mov = deserializar_mov(paquete->buffer);
@@ -90,6 +91,7 @@ void operar(int *socket_cliente) {
 				memcpy(valor_lectura, stream_rw, rw_memoria->tamanio_read_write);
 				usleep(app_config->retardo_respuesta * 1000);
 				request_resultado_lectura_memoria(*socket_cliente, valor_lectura);
+				free(stream_rw);
 				free(valor_lectura);
 				break;
 			case MSG_COPY_STRING:
@@ -105,6 +107,7 @@ void operar(int *socket_cliente) {
 				estado_escritura = escritura_memoria(rw_fs->pid, rw_fs->direccion_fisica, rw_fs->tamanio_valor, stream_rw);
 				usleep(app_config->retardo_respuesta * 1000);
 				request_status_escritura_memoria(*socket_cliente, estado_escritura);
+				free(stream_rw);
 				break;
 			case MSG_IO_FS_WRITE:
 				rw_fs = deserializar_rw_fs(paquete->buffer);
@@ -114,14 +117,21 @@ void operar(int *socket_cliente) {
 				usleep(app_config->retardo_respuesta * 1000);
 				request_valor_fs_lectura(*socket_cliente, valor_lectura);
 				free(valor_lectura);
+				free(stream_rw);
 				break;
 
 			default:
-
+				seguir_operando = 0;
 				break;
 		}
 
 		switch(paquete->codigo_operacion) {
+			case MSG_COPY_STRING:
+				free(copy_string);
+			break;
+			case MSG_PROXIMA_INSTRUCCION:
+				free(proxima_instruccion);
+			break;
 			case MSG_INICIAR_PROCESO:
 				free(iniciar_proceso->path);
 				free(iniciar_proceso);
