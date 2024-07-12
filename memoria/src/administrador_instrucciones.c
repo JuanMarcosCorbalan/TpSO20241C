@@ -113,38 +113,45 @@ void cargar_instrucciones(uint32_t pid, char* path) {
 
 		instruccion->tamanio_instruccion = strlen(lista_buffer_instrucciones[0]) + 1;
 		instruccion->instruccion = malloc(instruccion->tamanio_instruccion);
-		strcpy(instruccion->instruccion, lista_buffer_instrucciones[0]);
+		memcpy(instruccion->instruccion, lista_buffer_instrucciones[0], strlen(lista_buffer_instrucciones[0]) + 1);
+		free(lista_buffer_instrucciones[0]);
 
 		if(cantidad_parametros >= 1) {
 			instruccion->tamanio_parametro_1 = strlen(lista_buffer_instrucciones[1]) + 1;
 			instruccion->parametro_1 = malloc(instruccion->tamanio_parametro_1);
-			strcpy(instruccion->parametro_1, lista_buffer_instrucciones[1]);
+			memcpy(instruccion->parametro_1, lista_buffer_instrucciones[1], strlen(lista_buffer_instrucciones[1]) + 1);
+			free(lista_buffer_instrucciones[1]);
 		}
 
 		if(cantidad_parametros >= 2) {
 			instruccion->tamanio_parametro_2 = strlen(lista_buffer_instrucciones[2]) + 1;
 			instruccion->parametro_2 = malloc(instruccion->tamanio_parametro_2);
-			strcpy(instruccion->parametro_2, lista_buffer_instrucciones[2]);
+			memcpy(instruccion->parametro_2, lista_buffer_instrucciones[2], strlen(lista_buffer_instrucciones[2]) + 1);
+			free(lista_buffer_instrucciones[2]);
 		}
 
 		if(cantidad_parametros >= 3) {
 			instruccion->tamanio_parametro_3 = strlen(lista_buffer_instrucciones[3]) + 1;
 			instruccion->parametro_3 = malloc(instruccion->tamanio_parametro_3);
-			strcpy(instruccion->parametro_3, lista_buffer_instrucciones[3]);
+			memcpy(instruccion->parametro_3, lista_buffer_instrucciones[3], strlen(lista_buffer_instrucciones[3]) + 1);
+			free(lista_buffer_instrucciones[3]);
 		}
 
 		if(cantidad_parametros >= 4) {
 			instruccion->tamanio_parametro_4 = strlen(lista_buffer_instrucciones[4]) + 1;
 			instruccion->parametro_4 = malloc(instruccion->tamanio_parametro_4);
-			strcpy(instruccion->parametro_4, lista_buffer_instrucciones[4]);
+			memcpy(instruccion->parametro_4, lista_buffer_instrucciones[4], strlen(lista_buffer_instrucciones[4]) + 1);
+			free(lista_buffer_instrucciones[4]);
 		}
 
 		if(cantidad_parametros >= 5) {
 			instruccion->tamanio_parametro_5 = strlen(lista_buffer_instrucciones[5]) + 1;
 			instruccion->parametro_5 = malloc(instruccion->tamanio_parametro_5);
-			strcpy(instruccion->parametro_5, lista_buffer_instrucciones[5]);
+			memcpy(instruccion->parametro_5, lista_buffer_instrucciones[5], strlen(lista_buffer_instrucciones[5]) + 1);
+			free(lista_buffer_instrucciones[5]);
 		}
 
+		free(lista_buffer_instrucciones);
 		list_add(instrucciones, (void*) instruccion);
 	}
 
@@ -200,4 +207,33 @@ void remover_instrucciones(uint32_t pid) {
 
 	list_destroy_and_destroy_elements(aux_instruccion_proceso->instrucciones, eliminar_instruccion);
 	free(aux_instruccion_proceso);
+}
+
+void eliminar_instrucciones() {
+	void eliminar_instruccion(void*elem) {
+		t_instruccion* aux_instruccion = (t_instruccion*) elem;
+		uint8_t cantidad_parametros = obtener_cantidad_parametros_instruccion(convertir_tipo_instruccion(aux_instruccion->instruccion));
+
+		if(cantidad_parametros >= 1)
+			free(aux_instruccion->parametro_1);
+		if(cantidad_parametros >= 2)
+			free(aux_instruccion->parametro_2);
+		if(cantidad_parametros >= 3)
+			free(aux_instruccion->parametro_3);
+		if(cantidad_parametros >= 4)
+			free(aux_instruccion->parametro_4);
+		if(cantidad_parametros >= 5)
+			free(aux_instruccion->parametro_5);
+
+		free(aux_instruccion->instruccion);
+		free(aux_instruccion);
+	}
+
+	void buscar_por_pid(void* elem) {
+		t_instrucciones_proceso* aux = (t_instrucciones_proceso*) elem;
+		list_destroy_and_destroy_elements(aux->instrucciones, eliminar_instruccion);
+		free(aux);
+	}
+
+	list_destroy_and_destroy_elements(instrucciones_procesos, buscar_por_pid);
 }
