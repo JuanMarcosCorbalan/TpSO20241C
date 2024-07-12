@@ -15,6 +15,7 @@ typedef struct t_memoria_config {
 } t_memoria_config;
 
 extern t_memoria_config* app_config;
+extern t_config* archivo_config;
 
 void cargar_config(char* path);
 void finalizar_config(t_memoria_config* config);

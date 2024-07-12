@@ -251,6 +251,8 @@ uint32_t operar_copy_string(uint32_t pid, uint32_t origen, uint32_t destino, uin
 	logear_lectura_espacio_usuario(pid, origen, tamanio);
 	void* valor_lectura = lectura_memoria(pid, origen, tamanio);
 	logear_escritura_espacio_usuario(pid, destino, tamanio);
-	return escritura_memoria(pid, destino, tamanio, valor_lectura);
+	uint32_t resultado = escritura_memoria(pid, destino, tamanio, valor_lectura);
+	free(valor_lectura);
+	return resultado;
 }
 

@@ -12,5 +12,11 @@ int main(int argc, char *argv[]) {
 
 	iniciar_consola();
 
+	finalizar_procesos();
+	finalizar_estructuras();
+	finalizar_config();
+	log_destroy(app_log);
+	config_destroy(app_config_file);
+
 	return 0;
 }

@@ -17,6 +17,9 @@ typedef struct t_cpu_config {
 } t_cpu_config;
 
 extern t_cpu_config* app_config;
+extern t_config* archivo_config;
+
 void cargar_config(char* path);
+void finalizar_config();
 
 #endif /* HEADERS_CONFIG_H_ */

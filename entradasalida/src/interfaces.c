@@ -53,6 +53,11 @@ void operar_kernel() {
 		char* linea_consola;
 		char* sub_linea_consola;
 		uint32_t estado_escritura;
+		dt_fs_name* fs_name;
+		dt_fs_rw* fs_rw;
+		dt_fs_truncate* fs_truncate;
+		char* valor_escritura;
+		void* void_escritura;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_VALIDAR_INTERFAZ:
@@ -102,6 +107,61 @@ void operar_kernel() {
 				request_desbloquear_proceso_io(socket_kernel, io_std->pid);
 				free(linea_consola);
 				free(io_std);
+				break;
+			case MSG_IO_FS_CREATE:
+				fs_name = deserializar_fs_name(paquete->buffer);
+				create(fs_name->pid, fs_name->nombre_archivo);
+				usleep(app_config->tiempo_unidad_trabajo * 1000);
+				request_desbloquear_proceso_io(socket_kernel, fs_name->pid);
+				free(fs_name->nombre_archivo);
+				free(fs_name);
+				break;
+			case MSG_IO_FS_DELETE:
+				fs_name = deserializar_fs_name(paquete->buffer);
+				delete(fs_name->pid, fs_name->nombre_archivo);
+				usleep(app_config->tiempo_unidad_trabajo * 1000);
+				request_desbloquear_proceso_io(socket_kernel, fs_name->pid);
+				free(fs_name->nombre_archivo);
+				free(fs_name);
+				break;
+			case MSG_IO_FS_TRUNCATE:
+				fs_truncate = deserializar_truncate_archivo(paquete->buffer);
+				truncar(fs_truncate->fs_name->pid, fs_truncate->fs_name->nombre_archivo, fs_truncate->tamanio);
+				usleep(app_config->tiempo_unidad_trabajo * 1000);
+				request_desbloquear_proceso_io(socket_kernel, fs_truncate->fs_name->pid);
+				free(fs_truncate->fs_name->nombre_archivo);
+				free(fs_truncate->fs_name);
+				free(fs_truncate);
+				break;
+			case MSG_IO_FS_READ:
+				fs_rw = deserializar_fs_rw(paquete->buffer);
+				void_escritura = read_fs(fs_rw->fs_name->pid, fs_rw->fs_name->nombre_archivo, fs_rw->registro_tamanio, fs_rw->registro_puntero_archivo);
+				valor_escritura = malloc(fs_rw->registro_tamanio);
+				memcpy(valor_escritura, void_escritura, fs_rw->registro_tamanio);
+				request_fs_escritura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, valor_escritura);
+				deserializar_status_escritura_memoria(socket_memoria);
+				usleep(app_config->tiempo_unidad_trabajo * 1000);
+				request_desbloquear_proceso_io(socket_kernel, fs_rw->fs_name->pid);
+				free(valor_escritura);
+				free(void_escritura);
+				free(fs_rw->fs_name->nombre_archivo);
+				free(fs_rw->fs_name);
+				free(fs_rw);
+				break;
+			case MSG_IO_FS_WRITE:
+				fs_rw = deserializar_fs_rw(paquete->buffer);
+				request_fs_lectura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, fs_rw->registro_tamanio);
+				valor_escritura = deserializar_valor_fs_lectura(socket_memoria);
+				void_escritura = malloc(fs_rw->registro_tamanio);
+				memcpy(void_escritura, valor_escritura, fs_rw->registro_tamanio);
+				write_fs(fs_rw->fs_name->pid, fs_rw->fs_name->nombre_archivo, fs_rw->registro_tamanio, fs_rw->registro_puntero_archivo, void_escritura);
+				usleep(app_config->tiempo_unidad_trabajo * 1000);
+				request_desbloquear_proceso_io(socket_kernel, fs_rw->fs_name->pid);
+				free(void_escritura);
+				free(valor_escritura);
+				free(fs_rw->fs_name->nombre_archivo);
+				free(fs_rw->fs_name);
+				free(fs_rw);
 				break;
 			default:
 				seguir_operando = 0;

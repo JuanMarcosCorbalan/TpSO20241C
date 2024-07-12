@@ -9,5 +9,9 @@ int main(int argc, char *argv[]) {
 	instrucciones_procesos = list_create();
 	iniciar_servidor();
 
+	eliminar_instrucciones();
+	log_destroy(app_log);
+	config_destroy(archivo_config);
+
 	return 0;
 }

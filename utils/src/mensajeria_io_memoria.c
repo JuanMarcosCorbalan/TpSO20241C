@@ -129,3 +129,107 @@ char* deserializar_resultado_lectura_memoria(int socket) {
 
 	return interfaz;
 }
+
+void request_fs_lectura(int socket, uint32_t pid, uint32_t direccion_fisica, uint32_t tamanio_lectura) {
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	buffer->size = sizeof(uint32_t) * 4; 
+	void* stream = malloc(buffer->size);
+
+	uint32_t tamanio_valor = 0;
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_lectura, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_valor, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_WRITE, socket);
+}
+
+void request_fs_escritura(int socket, uint32_t pid, uint32_t direccion_fisica, char* valor){
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_valor = strlen(valor);
+	uint32_t tamanio_lectura = 0;
+	buffer->size = sizeof(uint32_t) * 4 + tamanio_valor;
+
+	void* stream = malloc(buffer->size);
+	int offset = 0;
+
+	memcpy(stream + offset, &pid, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &direccion_fisica, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_lectura, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, &tamanio_valor, sizeof(uint32_t));
+	offset += sizeof(uint32_t);
+	memcpy(stream + offset, valor, tamanio_valor);
+	offset += tamanio_valor;
+
+	buffer->stream = stream;
+
+	send_paquete(buffer, MSG_IO_FS_READ, socket);
+}
+
+dt_rw_fs* deserializar_rw_fs(t_buffer* buffer){
+	dt_rw_fs* rw_fs = malloc(sizeof(dt_rw_fs));
+	void* stream = buffer->stream;
+
+	memcpy(&rw_fs->pid, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&rw_fs->direccion_fisica, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&rw_fs->tamanio_lectura, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+	memcpy(&rw_fs->tamanio_valor, stream, sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	if(rw_fs->tamanio_valor > 0){
+		rw_fs->valor = malloc(rw_fs->tamanio_valor);
+		memcpy(rw_fs->valor, stream , rw_fs->tamanio_valor);
+	}
+
+	return rw_fs;
+}
+
+void request_valor_fs_lectura(int socket, char* valor_lectura) {
+	
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+	uint32_t tamanio_valor_lectura = strlen(valor_lectura) + 1;
+	buffer->size = sizeof(uint32_t) + tamanio_valor_lectura;
+	void* stream = malloc(buffer->size);
+
+	memcpy(stream,&tamanio_valor_lectura,sizeof(uint32_t));
+	memcpy(stream+sizeof(uint32_t),valor_lectura,tamanio_valor_lectura);
+
+	buffer->stream = stream;
+
+	send_paquete(buffer,MSG_IO_FS_WRITE,socket);
+
+}
+
+char* deserializar_valor_fs_lectura(int socket) {
+
+	t_paquete* paquete = recv_paquete(socket);
+	void *stream = paquete->buffer->stream;
+
+	uint32_t tamanio_valor;
+	memcpy(&tamanio_valor,stream,sizeof(uint32_t));
+	stream += sizeof(uint32_t);
+
+	char * valor = malloc(tamanio_valor);
+	memcpy(valor,stream,tamanio_valor);
+
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+	return valor;
+
+}

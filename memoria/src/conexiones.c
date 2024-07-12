@@ -21,6 +21,7 @@ void operar(int *socket_cliente) {
 		dt_rw_memoria* rw_memoria;
 		dt_copy_string* copy_string;
 		char* valor_lectura;
+		dt_rw_fs* rw_fs;
 
 		switch(paquete->codigo_operacion) {
 			case MSG_SOLICITUD_TAMANIO_PAGINA:
@@ -63,6 +64,7 @@ void operar(int *socket_cliente) {
 				memcpy(&valor_registro, stream_rw, sizeof(uint32_t));
 				usleep(app_config->retardo_respuesta * 1000);
 				request_valor_mov_in(*socket_cliente, valor_registro);
+				free(stream_rw);
 				break;
 			case MSG_MOV_OUT:
 				mov = deserializar_mov(paquete->buffer);
@@ -89,6 +91,7 @@ void operar(int *socket_cliente) {
 				memcpy(valor_lectura, stream_rw, rw_memoria->tamanio_read_write);
 				usleep(app_config->retardo_respuesta * 1000);
 				request_resultado_lectura_memoria(*socket_cliente, valor_lectura);
+				free(stream_rw);
 				free(valor_lectura);
 				break;
 			case MSG_COPY_STRING:
@@ -97,11 +100,38 @@ void operar(int *socket_cliente) {
 				usleep(app_config->retardo_respuesta * 1000);
 				request_status_copy_string(*socket_cliente, estado_escritura);
 				break;
+			case MSG_IO_FS_READ:
+				rw_fs = deserializar_rw_fs(paquete->buffer);
+				stream_rw = malloc(rw_fs->tamanio_valor);
+				memcpy(stream_rw, rw_fs->valor, rw_fs->tamanio_valor);
+				estado_escritura = escritura_memoria(rw_fs->pid, rw_fs->direccion_fisica, rw_fs->tamanio_valor, stream_rw);
+				usleep(app_config->retardo_respuesta * 1000);
+				request_status_escritura_memoria(*socket_cliente, estado_escritura);
+				free(stream_rw);
+				break;
+			case MSG_IO_FS_WRITE:
+				rw_fs = deserializar_rw_fs(paquete->buffer);
+				stream_rw = lectura_memoria(rw_fs->pid, rw_fs->direccion_fisica, rw_fs->tamanio_lectura);
+				valor_lectura = malloc(rw_fs->tamanio_lectura);
+				memcpy(valor_lectura, stream_rw, rw_fs->tamanio_lectura);
+				usleep(app_config->retardo_respuesta * 1000);
+				request_valor_fs_lectura(*socket_cliente, valor_lectura);
+				free(valor_lectura);
+				free(stream_rw);
+				break;
+
 			default:
+				seguir_operando = 0;
 				break;
 		}
 
 		switch(paquete->codigo_operacion) {
+			case MSG_COPY_STRING:
+				free(copy_string);
+			break;
+			case MSG_PROXIMA_INSTRUCCION:
+				free(proxima_instruccion);
+			break;
 			case MSG_INICIAR_PROCESO:
 				free(iniciar_proceso->path);
 				free(iniciar_proceso);
@@ -117,6 +147,11 @@ void operar(int *socket_cliente) {
 			case MSG_IO_STDOUT_WRITE:
 				free(rw_memoria->valor_std);
 				free(rw_memoria);
+				break;
+			case MSG_IO_FS_READ:
+			case MSG_IO_FS_WRITE:
+				free(rw_fs->valor);
+				free(rw_fs);
 				break;
 			default:
 				break;

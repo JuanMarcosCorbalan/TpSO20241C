@@ -20,5 +20,6 @@ extern t_list* instrucciones_procesos;
 void cargar_instrucciones(uint32_t pid, char* path);
 t_instruccion* obtener_instruccion(uint32_t pid, uint32_t program_counter);
 void remover_instrucciones(uint32_t pid);
+void eliminar_instrucciones();
 
 #endif /* HEADERS_ADMINISTRADOR_INSTRUCCIONES_H_ */

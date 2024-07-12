@@ -21,7 +21,8 @@ typedef enum t_operacion_consola {
 	FINALIZAR_PROCESO,
 	INICIAR_PLANIFICACION,
 	DETENER_PLANIFICACION,
-	PROCESO_ESTADO
+	PROCESO_ESTADO,
+	FINALIZAR
 } t_operacion_consola;
 
 extern t_list* lista_new;
