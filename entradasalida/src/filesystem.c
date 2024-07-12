@@ -13,7 +13,8 @@ void leer_archivos_existentes(){
     struct dirent *dir;
     int bloque_inicial = 0;
     int bloque_final = 0;
-    int tamanio = 0;
+    int tamanio_real = 0;
+    int cantidad_bloques = 0;
 
     char* path_metadatas = malloc(strlen(app_config->path_base_dialfs) + strlen("/fcbs") + 1);
     strcpy(path_metadatas, app_config->path_base_dialfs);
@@ -30,9 +31,15 @@ void leer_archivos_existentes(){
     			//srcpy(metadata[count]->nombre, dir->d_name);
     			t_config* config_a_cargar = config_create(path_config_a_cargar);
     			bloque_inicial = config_get_int_value(config_a_cargar, "BLOQUE_INICIAL");
-    			tamanio = config_get_int_value(config_a_cargar, "TAMANIO_ARCHIVO");
-    			bloque_final = bloque_inicial + (tamanio/app_config->block_size) - 1;
-    			agregar_a_lista_metadata(dir->d_name, bloque_inicial, bloque_final, tamanio);
+    			tamanio_real = config_get_int_value(config_a_cargar, "TAMANIO_ARCHIVO");
+
+    			cantidad_bloques = tamanio_real/app_config->block_size;
+    			if(tamanio_real%app_config->block_size){
+    				cantidad_bloques += 1;
+    			}
+
+    			bloque_final = bloque_inicial + cantidad_bloques - 1;
+    			agregar_a_lista_metadata(dir->d_name, bloque_inicial, bloque_final, cantidad_bloques*app_config->block_size, tamanio_real);
 
     			config_destroy(config_a_cargar);
     			free(path_config_a_cargar);
@@ -125,7 +132,7 @@ void create(int pid, char* nombre){
 
 	crear_metadata(nombre, primer_bloque);
 
-	agregar_a_lista_metadata(nombre, primer_bloque, primer_bloque, 16);
+	agregar_a_lista_metadata(nombre, primer_bloque, primer_bloque, 16, 0);
 	log_info(app_log, "PID: %d - Crear Archivo: %s", pid, nombre);
 }
 
@@ -181,8 +188,8 @@ void truncar(int pid, char* nombre, int nuevo_tamanio){
 		nuevo_bloque_final = 0;
 	}
 
-	actualizar_metadata(metadata, metadata->bloque_inicial, nuevo_bloque_final, cantidad_bloques_nueva * app_config->block_size);
-	log_info(app_log, "PID: %d - Truncar Archivo: %s - Tamaño: %d ",pid , nombre, cantidad_bloques_nueva * app_config->block_size);
+	actualizar_metadata(metadata, metadata->bloque_inicial, nuevo_bloque_final, cantidad_bloques_nueva * app_config->block_size, nuevo_tamanio);
+	log_info(app_log, "PID: %d - Truncar Archivo: %s - Tamaño: %d ",pid , nombre, nuevo_tamanio);
 }
 
 int extender_tamanio_archivo(int pid, t_metadata* metadata, int bloque_final, int* nuevo_bloque_final, int nuevo_tamanio){
@@ -234,7 +241,7 @@ void crear_metadata(char* nombre, int primer_bloque){
 	char primer_bloque_str[12];  // Suficientemente grande para contener el valor máximo de un uint32_t
 	sprintf(primer_bloque_str, "%u", primer_bloque);
 	config_set_value(metadata, "BLOQUE_INICIAL", primer_bloque_str);
-	config_set_value(metadata, "TAMANIO_ARCHIVO", "16");
+	config_set_value(metadata, "TAMANIO_ARCHIVO", "0");
 
 	config_save_in_file(metadata, path);
 	config_destroy(metadata);
@@ -247,7 +254,7 @@ t_config* leer_metadata(char* path){
 	return metadata;
 }
 
-void agregar_a_lista_metadata(char* nombre, int primer_bloque, int bloque_final, int tamanio) {
+void agregar_a_lista_metadata(char* nombre, int primer_bloque, int bloque_final, int tamanio, int tamanio_real) {
 
 	t_metadata* nuevo_metadata = malloc(sizeof(t_metadata));
 	nuevo_metadata->nombre = malloc(strlen(nombre) + 1);
@@ -255,6 +262,7 @@ void agregar_a_lista_metadata(char* nombre, int primer_bloque, int bloque_final,
 	nuevo_metadata->bloque_inicial = primer_bloque;
 	nuevo_metadata->bloque_final = bloque_final;
 	nuevo_metadata->tamanio = tamanio;
+	nuevo_metadata->tamanio_real = tamanio_real;
 
 	list_add(lista_metadata, nuevo_metadata);
 }
@@ -284,10 +292,11 @@ void borrar_metadata_lista(char* nombre){
 	list_remove_and_destroy_by_condition(lista_metadata,encontrar_por_nombre,eliminar_metadata);
 }
 
-void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nuevo_bloque_final, int nuevo_tamanio){
+void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nuevo_bloque_final, int nuevo_tamanio, int tamanio_real){
 	metadata->bloque_inicial = nuevo_bloque_inicial;
 	metadata->bloque_final = nuevo_bloque_final;
 	metadata->tamanio = nuevo_tamanio;
+	metadata->tamanio_real = tamanio_real;
 	char* nombre_metadata = malloc(strlen(metadata->nombre)+1);
 	memcpy(nombre_metadata, metadata->nombre, strlen(metadata->nombre)+1);
 	char* path = crear_path_metadata(nombre_metadata);
@@ -299,7 +308,7 @@ void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nue
 	char primer_bloque_str[12];  // Suficientemente grande para contener el valor máximo de un uint32_t
 	sprintf(primer_bloque_str, "%u", nuevo_bloque_inicial);
 	char nuevo_tamanio_str[12];
-	sprintf(nuevo_tamanio_str, "%u", nuevo_tamanio);
+	sprintf(nuevo_tamanio_str, "%u", tamanio_real);
 	config_set_value(metadata_config, "TAMANIO_ARCHIVO", nuevo_tamanio_str);
 	config_set_value(metadata_config, "BLOQUE_INICIAL", primer_bloque_str);
 
@@ -385,7 +394,7 @@ void compactacion(int pid, char* nombre_metadata_a_truncar){
 
 		ultimo_bloque_usado = pegar_y_reubicar(metadata_aux, info, primer_bloque_libre);
 		free(info);
-		actualizar_metadata(metadata_aux, primer_bloque_libre, ultimo_bloque_usado, metadata_aux->tamanio);
+		actualizar_metadata(metadata_aux, primer_bloque_libre, ultimo_bloque_usado, metadata_aux->tamanio, metadata_aux->tamanio_real);
 
 		primer_bloque_libre = ultimo_bloque_usado + 1;
 		// esto es para ir con el siguiente, devuelve -1 si ya no hay archivos siguientes (esta todo compactado)
@@ -393,7 +402,7 @@ void compactacion(int pid, char* nombre_metadata_a_truncar){
 	}
 	ultimo_bloque_usado = pegar_y_reubicar(metadata, buffer_archivo_truncado, primer_bloque_libre);
 	free(buffer_archivo_truncado);
-	actualizar_metadata(metadata, primer_bloque_libre, ultimo_bloque_usado, metadata->tamanio);
+	actualizar_metadata(metadata, primer_bloque_libre, ultimo_bloque_usado, metadata->tamanio, metadata->tamanio_real);
 	log_info(app_log, "PID: %d - Fin Compactación", 1);
 	usleep(app_config->retraso_compactacion * 1000);
 }

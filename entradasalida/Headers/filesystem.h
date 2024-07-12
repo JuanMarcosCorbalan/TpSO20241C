@@ -34,6 +34,7 @@ typedef struct t_metadata {
 	int tamanio;
 	int bloque_inicial;
 	int bloque_final;
+	int tamanio_real;
 } t_metadata;
 
 
@@ -55,7 +56,7 @@ void crear_metadata(char* nombre, int primer_bloque);
 
 t_config* leer_metadata(char* nombre);
 
-void agregar_a_lista_metadata(char* nombre, int primer_bloque, int ultimo_bloque, int tamanio);
+void agregar_a_lista_metadata(char* nombre, int primer_bloque, int ultimo_bloque, int tamanio, int tamanio_real);
 
 t_metadata* buscar_metadata_lista_por_nombre(char* nombre);
 
@@ -63,7 +64,7 @@ t_metadata* buscar_metadata_lista_por_bloque_inicial(int bloque_inicial);
 
 void borrar_metadata_lista(char* nombre);
 
-void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nuevo_bloque_final, int nuevo_tamanio);
+void actualizar_metadata(t_metadata* metadata, int nuevo_bloque_inicial, int nuevo_bloque_final, int nuevo_tamanio, int tamanio_real);
 
 int buscar_primer_archivo_desde(int bloque);
 
