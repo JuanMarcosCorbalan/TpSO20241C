@@ -79,7 +79,7 @@ void operar_kernel() {
 				logear_operacion(io_std->pid, paquete->codigo_operacion);
 				printf("Ingrese una cadena de caracteres para guardar en memoria\n");
 				linea_consola = readline(">");
-				sub_linea_consola = string_substring_until(linea_consola, io_std->tamanio);
+				sub_linea_consola = string_substring_until(linea_consola, io_std->tamanio + 1);
 				request_escritura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, sub_linea_consola);
 
 				request_proceso_io_esperando(socket_kernel, io_std->pid);
@@ -97,7 +97,7 @@ void operar_kernel() {
 			case MSG_IO_STDOUT_WRITE:
 				io_std = deserializar_io_std(paquete->buffer);
 				logear_operacion(io_std->pid, paquete->codigo_operacion);
-				request_lectura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, io_std->tamanio);
+				request_lectura_memoria(socket_memoria, io_std->pid, io_std->direccion_fisica, io_std->tamanio + 1);
 				linea_consola = deserializar_resultado_lectura_memoria(socket_memoria);
 
 				request_proceso_io_esperando(socket_kernel, io_std->pid);
