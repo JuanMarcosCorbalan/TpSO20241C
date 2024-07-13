@@ -18,5 +18,10 @@ int main(int argc, char *argv[]) {
 	log_destroy(app_log);
 	config_destroy(app_config_file);
 
+	close(socket_cpu_dispatch);
+	close(socket_cpu_interrupt);
+	close(socket_memoria);
+	close(socket_escucha_io);
+
 	return 0;
 }

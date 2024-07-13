@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
 	finalizar_config();
 	config_destroy(archivo_config);
 
+	close(socket_kernel);
+	close(socket_memoria);
 
 	return 0;
 }
