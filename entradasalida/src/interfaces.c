@@ -110,6 +110,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_FS_CREATE:
 				fs_name = deserializar_fs_name(paquete->buffer);
+				logear_operacion(fs_name->pid, paquete->codigo_operacion);
 				create(fs_name->pid, fs_name->nombre_archivo);
 				usleep(app_config->tiempo_unidad_trabajo * 1000);
 				request_desbloquear_proceso_io(socket_kernel, fs_name->pid);
@@ -118,6 +119,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_FS_DELETE:
 				fs_name = deserializar_fs_name(paquete->buffer);
+				logear_operacion(fs_name->pid, paquete->codigo_operacion);
 				delete(fs_name->pid, fs_name->nombre_archivo);
 				usleep(app_config->tiempo_unidad_trabajo * 1000);
 				request_desbloquear_proceso_io(socket_kernel, fs_name->pid);
@@ -126,6 +128,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_FS_TRUNCATE:
 				fs_truncate = deserializar_truncate_archivo(paquete->buffer);
+				logear_operacion(fs_truncate->fs_name->pid, paquete->codigo_operacion);
 				truncar(fs_truncate->fs_name->pid, fs_truncate->fs_name->nombre_archivo, fs_truncate->tamanio);
 				usleep(app_config->tiempo_unidad_trabajo * 1000);
 				request_desbloquear_proceso_io(socket_kernel, fs_truncate->fs_name->pid);
@@ -135,6 +138,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_FS_READ:
 				fs_rw = deserializar_fs_rw(paquete->buffer);
+				logear_operacion(fs_rw->fs_name->pid, paquete->codigo_operacion);
 				void_escritura = read_fs(fs_rw->fs_name->pid, fs_rw->fs_name->nombre_archivo, fs_rw->registro_tamanio, fs_rw->registro_puntero_archivo);
 				valor_escritura = malloc(fs_rw->registro_tamanio);
 				memcpy(valor_escritura, void_escritura, fs_rw->registro_tamanio);
@@ -150,6 +154,7 @@ void operar_kernel() {
 				break;
 			case MSG_IO_FS_WRITE:
 				fs_rw = deserializar_fs_rw(paquete->buffer);
+				logear_operacion(fs_rw->fs_name->pid, paquete->codigo_operacion);
 				request_fs_lectura(socket_memoria, fs_rw->fs_name->pid, fs_rw->registro_direccion, fs_rw->registro_tamanio);
 				valor_escritura = deserializar_valor_fs_lectura(socket_memoria);
 				void_escritura = malloc(fs_rw->registro_tamanio);

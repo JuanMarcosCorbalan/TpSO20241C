@@ -62,6 +62,10 @@ void desbloquear_por_io(t_interfaz_io* interfaz, uint32_t pid) {
 		sem_wait(&sem_planificacion_pausada);
 
 	t_pcb* proceso_desbloqueado = list_remove_by_condition(interfaz->bloqueados, remover_por_pid);
+
+	if(proceso_desbloqueado == NULL)
+		return;
+
 	remover_pcb(proceso_desbloqueado, proceso_desbloqueado->estado);
 
 	if(strcmp(app_config->algoritmo_planificacion, "VRR") == 0 && proceso_desbloqueado->quantum_ejecutados <= app_config->quantum && proceso_desbloqueado->quantum_ejecutados > 0) {
@@ -86,6 +90,10 @@ void finalizar_por_io(t_interfaz_io* interfaz, uint32_t pid) {
 		sem_wait(&sem_planificacion_pausada);
 
 	t_pcb* proceso_desbloqueado = list_remove_by_condition(interfaz->bloqueados, remover_por_pid);
+
+	if(proceso_desbloqueado == NULL)
+		return;
+
 	remover_pcb(proceso_desbloqueado, proceso_desbloqueado->estado);
 	logear_fin_proceso(pid, "INVALID_WRITE");
 	agregar_pcb(proceso_desbloqueado, EXIT);
