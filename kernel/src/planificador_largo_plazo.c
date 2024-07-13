@@ -43,6 +43,9 @@ void finalizar_por_consola(uint32_t pid) {
 		if(proceso->estado != NEW || proceso->estado != EXEC)
 			sem_post(&sem_grado_multiprogramacion);
 
+		if(proceso->estado == READY)
+			sem_wait(&sem_lista_ready);
+
 		agregar_pcb(proceso, _EXIT);
 		liberar_recursos(proceso);
 		request_finalizar_proceso(socket_memoria, pid);
